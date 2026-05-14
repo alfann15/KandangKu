@@ -30,7 +30,7 @@ import {
   LogOut, Plus, Trash2, AlertTriangle, Package,
   Bird, ShoppingCart, Clock, Receipt, Loader2,
   LayoutDashboard, ShieldCheck, MessageCircle, Phone,
-  Wallet, Ban, Check, Search, X, Printer,
+  Wallet, Ban, Check, Search, X, Printer, Menu,
 } from 'lucide-react';
 
 type Kategori = { id: number; nama_kategori: string; harga_hari_ini: number; stok_bebas: number; stok_booking: number };
@@ -95,9 +95,7 @@ export default function KasirPage() {
   const [filter_lewat_tempo, setFilterLewatTempo] = useState(false);
 
   // Pembatalan transaksi
-  const [openBatal, setOpenBatal] = useState(false);
-  const [selectedForBatal, setSelectedForBatal] = useState<Piutang | null>(null);
-  const [alasan_batal, setAlasanBatal] = useState('');
+  const [openMobileMenu, setOpenMobileMenu] = useState(false);
   const [refund_choice, setRefundChoice] = useState<'REFUND' | 'NO_REFUND'>('REFUND');
   const [isSubmittingBatal, setIsSubmittingBatal] = useState(false);
 
@@ -616,23 +614,43 @@ export default function KasirPage() {
             </Button>
             
             {/* Mobile menu dropdown */}
-            <div className="sm:hidden">
-              <select 
-                className="h-9 px-2 rounded-md border border-input bg-background text-sm"
-                onChange={(e) => {
-                  if (e.target.value === 'mati') setOpenCatatMati(true);
-                  else if (e.target.value === 'stok') setOpenTambahStok(true);
-                  else if (e.target.value === 'pengeluaran') setOpenPengeluaran(true);
-                  else if (e.target.value === 'mati-po') setOpenKurangiEkorPo(true);
-                  e.target.value = '';
-                }}
+            <div className="relative sm:hidden">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-9 w-9 p-0"
+                onClick={() => setOpenMobileMenu(!openMobileMenu)}
               >
-                <option value="">Menu</option>
-                <option value="mati">Catat Mati</option>
-                <option value="stok">Tambah Stok</option>
-                <option value="pengeluaran">Pengeluaran</option>
-                <option value="mati-po">Mati PO</option>
-              </select>
+                <Menu className="h-4 w-4" />
+              </Button>
+              {openMobileMenu && (
+                <div className="absolute right-0 mt-2 w-40 rounded-lg border border-border bg-background shadow-lg z-50">
+                  <button 
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 border-b border-border"
+                    onClick={() => { setOpenCatatMati(true); setOpenMobileMenu(false); }}
+                  >
+                    <AlertTriangle className="h-4 w-4" /> Catat Mati
+                  </button>
+                  <button 
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 border-b border-border"
+                    onClick={() => { setOpenTambahStok(true); setOpenMobileMenu(false); }}
+                  >
+                    <Package className="h-4 w-4" /> Tambah Stok
+                  </button>
+                  <button 
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 border-b border-border"
+                    onClick={() => { setOpenPengeluaran(true); setOpenMobileMenu(false); }}
+                  >
+                    <Wallet className="h-4 w-4" /> Pengeluaran
+                  </button>
+                  <button 
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
+                    onClick={() => { setOpenKurangiEkorPo(true); setOpenMobileMenu(false); }}
+                  >
+                    <AlertTriangle className="h-4 w-4" /> Mati PO
+                  </button>
+                </div>
+              )}
             </div>
 
             {role === 'ADMIN' && (
