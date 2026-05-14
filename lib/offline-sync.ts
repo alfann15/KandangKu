@@ -13,6 +13,7 @@ export type PendingTransaksi = {
   status_bayar: string;
   total_bayar: number;
   diskon: number;
+  dp?: number;
   tanggal_jatuh_tempo?: string;
   items: Array<{
     id_kategori: number;
