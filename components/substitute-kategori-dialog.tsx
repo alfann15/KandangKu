@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/lib/use-toast';
 import { formatRupiah } from '@/lib/utils';
 import { substituteKategoriPO } from '@/lib/actions';
-import { Loader2, Swap2 } from 'lucide-react';
+import { Loader2, ArrowRightLeft } from 'lucide-react';
 
 type DetailPesanan = {
   id: number;
@@ -71,7 +71,7 @@ export function SubstituteKategoriDialog({ open, onOpenChange, detail, kategoriL
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Swap2 className="h-5 w-5 text-muted-foreground" /> Substitusi Kategori
+            <ArrowRightLeft className="h-5 w-5 text-muted-foreground" /> Substitusi Kategori
           </DialogTitle>
           <DialogDescription>
             Ganti kategori untuk PO yang ayamnya mati
