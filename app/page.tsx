@@ -243,8 +243,8 @@ export default async function Home() {
             },
             {
               icon: LineChart,
-              title: 'Rekap Periode',
-              desc: 'Analisa harian, mingguan, bulanan dengan filter fleksibel.',
+              title: 'Rekap & Analytics',
+              desc: 'Analisa harian, mingguan, bulanan + margin, top kasir, top kategori.',
             },
             {
               icon: ShieldCheck,
@@ -253,8 +253,8 @@ export default async function Home() {
             },
             {
               icon: Smartphone,
-              title: 'Mobile First',
-              desc: 'Touch-friendly, ringan, dan responsif di semua perangkat.',
+              title: 'PWA & Offline',
+              desc: 'Installable app, offline-capable, sync otomatis saat online.',
             },
           ].map((f) => (
             <Card key={f.title} className="group transition-all hover:border-foreground/20 hover:shadow-md">
@@ -328,7 +328,7 @@ export default async function Home() {
         {/* Footer */}
         <footer className="mx-auto mt-auto w-full max-w-5xl pt-16 text-center">
           <p className="text-xs text-muted-foreground">
-            KandangKu v1.1.0 · Built with Next.js, Prisma &amp; TypeScript
+            KandangKu v1.2.0 · Built with Next.js, Prisma &amp; TypeScript
           </p>
         </footer>
       </div>
