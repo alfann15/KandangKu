@@ -1445,7 +1445,10 @@ export async function getTransaksiList(): Promise<
     return {
       success: true,
       message: 'Transaksi berhasil diambil',
-      data: transaksi,
+      data: transaksi.map((t) => ({
+        ...t,
+        waktu_transaksi: t.waktu_transaksi.toISOString(),
+      })),
     };
   } catch (error) {
     console.error('Error getting transaksi list:', error);
