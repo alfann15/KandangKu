@@ -91,7 +91,7 @@ export function KurangiEkorPoDialog({ open, onOpenChange, kategoriList, onSucces
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-amber-600" /> Kurangi Ekor dari PO
+            <AlertTriangle className="h-5 w-5 text-amber-600" /> Kurangi Ayam dari PO
           </DialogTitle>
           <DialogDescription>
             Pilih PO spesifik yang ayamnya mati
@@ -159,12 +159,12 @@ export function KurangiEkorPoDialog({ open, onOpenChange, kategoriList, onSucces
 
           {poSelected && (
             <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Jumlah Ekor Mati</Label>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Jumlah Ayam Mati</Label>
               <Input
                 type="number"
                 min="1"
                 max={poSelected.jumlah_ekor}
-                placeholder={`Max: ${poSelected.jumlah_ekor} ekor`}
+                placeholder={`Max: ${poSelected.jumlah_ekor} ayam`}
                 value={jumlahMati}
                 onChange={(e) => setJumlahMati(e.target.value)}
               />
@@ -187,7 +187,7 @@ export function KurangiEkorPoDialog({ open, onOpenChange, kategoriList, onSucces
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting || !selectedPo || !jumlahMati} variant="destructive">
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Memproses...' : 'Kurangi Ekor'}
+            {isSubmitting ? 'Memproses...' : 'Kurangi Ayam'}
           </Button>
         </DialogFooter>
       </DialogContent>
