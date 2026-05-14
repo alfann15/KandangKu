@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { z } from 'zod';
 import { formatRupiah } from '@/lib/utils';
 import { ActionResponse } from '@/lib/types';
+import { requireAuth, handleActionError } from '@/lib/server-utils';
 
 // ============================================
 // SHARED TYPES & VALIDATION HELPERS
@@ -109,11 +110,9 @@ export async function createTransaksiLangsung(
   try {
     const validated = TransaksiLangsungSchema.parse(input);
 
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, message: 'Anda harus login terlebih dahulu', error: 'UNAUTHORIZED' };
-    }
-    const id_kasir = parseInt(session.user.id as string, 10);
+    const authResult = await requireAuth();
+    if ('error' in authResult) return authResult;
+    const { id_kasir } = authResult as { id_kasir: number; role: string };
 
     // Ambil semua kategori yang dibutuhkan
     const kategori_ids = validated.items.map((i) => i.id_kategori);
