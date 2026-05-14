@@ -4,13 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-
-type ActionResponse<T = any> = {
-  success: boolean;
-  message: string;
-  data?: T;
-  error?: string;
-};
+import { ActionResponse } from '@/lib/types';
 
 /**
  * Get all kategori untuk admin editing

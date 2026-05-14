@@ -3,13 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { z } from 'zod';
-
-type ActionResponse<T = any> = {
-  success: boolean;
-  message: string;
-  data?: T;
-  error?: string;
-};
+import { ActionResponse } from '@/lib/types';
 
 // ============================================
 // CREATE PENGELUARAN

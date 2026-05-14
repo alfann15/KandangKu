@@ -4,17 +4,11 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { z } from 'zod';
 import { formatRupiah } from '@/lib/utils';
+import { ActionResponse } from '@/lib/types';
 
 // ============================================
 // SHARED TYPES & VALIDATION HELPERS
 // ============================================
-
-type ActionResponse<T = any> = {
-  success: boolean;
-  message: string;
-  data?: T;
-  error?: string;
-};
 
 // ============================================
 // PELANGGAN HELPER

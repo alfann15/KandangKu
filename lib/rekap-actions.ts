@@ -2,14 +2,8 @@
 
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { ActionResponse } from '@/lib/types';
 import { z } from 'zod';
-
-export type ActionResponse<T = any> = {
-  success: boolean;
-  message: string;
-  data?: T;
-  error?: string;
-};
 
 // ============================================
 // SCHEMA & TYPES

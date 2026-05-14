@@ -2,13 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-
-export type ActionResponse<T = any> = {
-  success: boolean;
-  message: string;
-  data?: T;
-  error?: string;
-};
+import { ActionResponse } from '@/lib/types';
 
 /**
  * Dashboard summary hari ini.
