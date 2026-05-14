@@ -1205,3 +1205,92 @@ function formatRupiah(value: number): string {
     minimumFractionDigits: 0,
   }).format(value);
 }
+
+
+/**
+ * Catat ayam mati dari PO (stok booking berkurang)
+ * - Kurangi stok_booking kategori
+ * - Log mutasi stok dengan tipe AYAM_MATI_PO
+ */
+const CatatAyamMatiPOSchema = z.object({
+  id_kategori: z.number().int().positive(),
+  jumlah_ekor: z.number().int().positive('Jumlah harus lebih dari 0'),
+  keterangan: z.string().optional(),
+});
+
+type CatatAyamMatiPOInput = z.infer<typeof CatatAyamMatiPOSchema>;
+
+export async function catatAyamMatiPO(
+  input: CatatAyamMatiPOInput
+): Promise<ActionResponse> {
+  try {
+    const validated = CatatAyamMatiPOSchema.parse(input);
+
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, message: 'Unauthorized', error: 'UNAUTHORIZED' };
+    }
+
+    const id_kasir = parseInt(session.user.id as string, 10);
+
+    const kategori = await prisma.kategoriAyam.findUnique({
+      where: { id: validated.id_kategori },
+    });
+
+    if (!kategori) {
+      return {
+        success: false,
+        message: 'Kategori ayam tidak ditemukan',
+        error: 'NOT_FOUND',
+      };
+    }
+
+    if (kategori.stok_booking < validated.jumlah_ekor) {
+      return {
+        success: false,
+        message: `Stok booking tidak cukup (tersedia: ${kategori.stok_booking}, butuh: ${validated.jumlah_ekor})`,
+        error: 'INSUFFICIENT_STOCK',
+      };
+    }
+
+    // Update stok booking dan log mutasi
+    await prisma.$transaction(async (tx) => {
+      await tx.kategoriAyam.update({
+        where: { id: validated.id_kategori },
+        data: {
+          stok_booking: kategori.stok_booking - validated.jumlah_ekor,
+        },
+      });
+
+      await tx.mutasiStok.create({
+        data: {
+          id_kategori: validated.id_kategori,
+          jumlah_ekor: validated.jumlah_ekor,
+          tipe_mutasi: 'AYAM_MATI_PO',
+          id_kasir,
+        },
+      });
+    });
+
+    return {
+      success: true,
+      message: `${validated.jumlah_ekor} ekor ayam PO ${kategori.nama_kategori} dicatat mati. Stok booking berkurang.`,
+    };
+  } catch (error) {
+    console.error('Error catatAyamMatiPO:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: 'Data tidak valid: ' + error.errors[0].message,
+        error: 'VALIDATION_ERROR',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Gagal mencatat ayam mati',
+      error: 'UPDATE_ERROR',
+    };
+  }
+}
