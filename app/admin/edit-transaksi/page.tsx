@@ -53,7 +53,7 @@ export default function EditTransaksiPage() {
     if (status !== 'authenticated') return;
 
     if (!transaksi_id) {
-      router.push('/admin');
+      router.push('/admin/edit-transaksi/list');
       return;
     }
 
@@ -74,7 +74,7 @@ export default function EditTransaksiPage() {
         title: 'Gagal memuat transaksi',
         description: result.message,
       });
-      router.push('/admin');
+      router.push('/admin/edit-transaksi/list');
     }
   };
 

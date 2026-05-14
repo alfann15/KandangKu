@@ -264,7 +264,7 @@ export default function AdminPage() {
                 <Bird className="h-4 w-4" /> Kasir
               </Button>
             </Link>
-            <Link href="/admin/edit-transaksi">
+            <Link href="/admin/edit-transaksi/list">
               <Button variant="outline" size="sm" className="gap-1.5 hidden sm:inline-flex">
                 <Pencil className="h-4 w-4" /> Edit Transaksi
               </Button>

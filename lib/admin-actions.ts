@@ -1405,3 +1405,54 @@ export async function getMutasiStokHistory(limit: number = 50): Promise<
     };
   }
 }
+
+
+export async function getTransaksiList(): Promise<
+  ActionResponse<
+    Array<{
+      id: string;
+      nama_pelanggan: string;
+      tipe_transaksi: string;
+      status_bayar: string;
+      total_bayar: number;
+      waktu_transaksi: string;
+    }>
+  >
+> {
+  try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    const transaksi = await prisma.transaksi.findMany({
+      select: {
+        id: true,
+        nama_pelanggan: true,
+        tipe_transaksi: true,
+        status_bayar: true,
+        total_bayar: true,
+        waktu_transaksi: true,
+      },
+      orderBy: { waktu_transaksi: 'desc' },
+      take: 100,
+    });
+
+    return {
+      success: true,
+      message: 'Transaksi berhasil diambil',
+      data: transaksi,
+    };
+  } catch (error) {
+    console.error('Error getting transaksi list:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil data transaksi',
+      error: 'FETCH_ERROR',
+    };
+  }
+}
