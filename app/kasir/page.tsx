@@ -232,7 +232,7 @@ export default function KasirPage() {
         await savePendingTransaksi({
           nama_pelanggan,
           nomor_wa: nomor_wa.trim() || undefined,
-          items: cart.map((i) => ({ id_kategori: i.kategori_id, jumlah_ekor: i.jumlah_ekor })),
+          items: cart.map((i) => ({ id_kategori: i.kategori_id, jumlah_ekor: i.jumlah_ekor, harga_satuan: i.harga })),
           diskon: diskon_nilai,
           status_bayar,
           total_bayar,
@@ -295,7 +295,7 @@ export default function KasirPage() {
         await savePendingTransaksi({
           nama_pelanggan,
           nomor_wa: nomor_wa.trim() || undefined,
-          items: cart.map((i) => ({ id_kategori: i.kategori_id, jumlah_ekor: i.jumlah_ekor })),
+          items: cart.map((i) => ({ id_kategori: i.kategori_id, jumlah_ekor: i.jumlah_ekor, harga_satuan: i.harga })),
           dp: parseInt(dp_po) || 0,
           diskon: diskon_nilai,
           tanggal_jatuh_tempo: tanggal_jatuh_tempo || undefined,
