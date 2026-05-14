@@ -403,12 +403,12 @@ export async function getRekapPeriode(
 
 
 /**
- * Export rekap ke Excel
+ * Export rekap ke Excel - return data untuk di-download client-side
  */
 export async function exportRekapToExcel(
   input: RekapInput,
   rekapData: RekapData
-): Promise<ActionResponse> {
+): Promise<ActionResponse<{ data: string; filename: string }>> {
   try {
     const XLSX = require('xlsx');
 
@@ -462,13 +462,15 @@ export async function exportRekapToExcel(
     const ws5 = XLSX.utils.aoa_to_sheet(pengeluaranData);
     XLSX.utils.book_append_sheet(wb, ws5, 'Pengeluaran');
 
-    // Write file
+    // Write to buffer
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const data = Buffer.from(wbout).toString('base64');
     const filename = `Rekap_${input.start_date}_${input.end_date}.xlsx`;
-    XLSX.writeFile(wb, filename);
 
     return {
       success: true,
-      message: `File ${filename} berhasil diunduh`,
+      message: 'File siap diunduh',
+      data: { data, filename },
     };
   } catch (error) {
     console.error('Error exporting to Excel:', error);

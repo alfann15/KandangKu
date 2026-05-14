@@ -204,8 +204,23 @@ export default function RekapPage() {
     setExporting(true);
     const result = await exportRekapToExcel({ start_date: startDate, end_date: endDate }, data);
     setExporting(false);
-    if (result.success) {
-      toast({ variant: 'success', title: 'Berhasil', description: result.message });
+    if (result.success && result.data) {
+      // Download file di client
+      const binaryString = atob(result.data.data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = result.data.filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({ variant: 'success', title: 'Berhasil', description: 'File berhasil diunduh' });
     } else {
       toast({ variant: 'destructive', title: 'Gagal', description: result.message });
     }
