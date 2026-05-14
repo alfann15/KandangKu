@@ -1294,3 +1294,175 @@ export async function catatAyamMatiPO(
     };
   }
 }
+
+
+
+/**
+ * Get daftar PO aktif per kategori
+ */
+export async function getPoAktifPerKategori(id_kategori: number): Promise<
+  ActionResponse<
+    Array<{
+      id_transaksi: string;
+      nama_pelanggan: string;
+      jumlah_ekor: number;
+      harga_satuan: number;
+      sudah_dibayar: number;
+      sisa_bayar: number;
+    }>
+  >
+> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, message: 'Unauthorized', error: 'UNAUTHORIZED' };
+    }
+
+    const poList = await prisma.detailTransaksi.findMany({
+      where: {
+        id_kategori,
+        transaksi: {
+          tipe_transaksi: 'PRE_ORDER',
+          status_bayar: { in: ['DP', 'BELUM_BAYAR'] },
+          dibatalkan_pada: null,
+        },
+      },
+      include: {
+        transaksi: {
+          select: {
+            id: true,
+            nama_pelanggan: true,
+            total_bayar: true,
+            diskon: true,
+          },
+        },
+      },
+    });
+
+    const data = poList.map((p) => ({
+      id_transaksi: p.transaksi.id,
+      nama_pelanggan: p.transaksi.nama_pelanggan,
+      jumlah_ekor: p.jumlah_ekor,
+      harga_satuan: p.harga_satuan,
+      sudah_dibayar: p.transaksi.total_bayar,
+      sisa_bayar: p.jumlah_ekor * p.harga_satuan - p.transaksi.total_bayar + p.transaksi.diskon,
+    }));
+
+    return {
+      success: true,
+      message: 'PO aktif berhasil diambil',
+      data,
+    };
+  } catch (error) {
+    console.error('Error getPoAktifPerKategori:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil PO aktif',
+      error: 'FETCH_ERROR',
+    };
+  }
+}
+
+/**
+ * Kurangi jumlah ekor dari PO spesifik (ayam mati)
+ */
+const KurangiEkorPoSchema = z.object({
+  id_transaksi: z.string().min(1),
+  id_kategori: z.number().int().positive(),
+  jumlah_ekor_mati: z.number().int().positive('Jumlah harus lebih dari 0'),
+  keterangan: z.string().optional(),
+});
+
+type KurangiEkorPoInput = z.infer<typeof KurangiEkorPoSchema>;
+
+export async function kurangiEkorPo(
+  input: KurangiEkorPoInput
+): Promise<ActionResponse> {
+  try {
+    const validated = KurangiEkorPoSchema.parse(input);
+
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, message: 'Unauthorized', error: 'UNAUTHORIZED' };
+    }
+
+    const id_kasir = parseInt(session.user.id as string, 10);
+
+    const detail = await prisma.detailTransaksi.findFirst({
+      where: {
+        id_transaksi: validated.id_transaksi,
+        id_kategori: validated.id_kategori,
+      },
+      include: {
+        transaksi: true,
+        kategori: true,
+      },
+    });
+
+    if (!detail) {
+      return {
+        success: false,
+        message: 'Detail PO tidak ditemukan',
+        error: 'NOT_FOUND',
+      };
+    }
+
+    if (detail.jumlah_ekor < validated.jumlah_ekor_mati) {
+      return {
+        success: false,
+        message: `Jumlah ekor PO hanya ${detail.jumlah_ekor}, tidak bisa kurangi ${validated.jumlah_ekor_mati}`,
+        error: 'INSUFFICIENT_STOCK',
+      };
+    }
+
+    // Update detail transaksi dan stok booking
+    await prisma.$transaction(async (tx) => {
+      // Kurangi jumlah ekor di detail transaksi
+      await tx.detailTransaksi.update({
+        where: { id: detail.id },
+        data: {
+          jumlah_ekor: detail.jumlah_ekor - validated.jumlah_ekor_mati,
+        },
+      });
+
+      // Kurangi stok booking kategori
+      await tx.kategoriAyam.update({
+        where: { id: validated.id_kategori },
+        data: {
+          stok_booking: detail.kategori.stok_booking - validated.jumlah_ekor_mati,
+        },
+      });
+
+      // Log mutasi stok
+      await tx.mutasiStok.create({
+        data: {
+          id_kategori: validated.id_kategori,
+          jumlah_ekor: validated.jumlah_ekor_mati,
+          tipe_mutasi: 'AYAM_MATI_PO',
+          id_kasir,
+        },
+      });
+    });
+
+    return {
+      success: true,
+      message: `${validated.jumlah_ekor_mati} ekor dari PO ${detail.transaksi.nama_pelanggan} dicatat mati. Stok booking berkurang.`,
+    };
+  } catch (error) {
+    console.error('Error kurangiEkorPo:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: 'Data tidak valid: ' + error.errors[0].message,
+        error: 'VALIDATION_ERROR',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Gagal kurangi ekor PO',
+      error: 'UPDATE_ERROR',
+    };
+  }
+}
