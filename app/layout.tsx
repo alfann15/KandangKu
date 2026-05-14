@@ -8,15 +8,6 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "KandangKu - POS & Inventaris Ayam",
   description: "Aplikasi Point of Sale dan Manajemen Inventaris untuk penjualan ayam hidup",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "KandangKu",
-  },
-  formatDetection: {
-    telephone: false,
-  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -31,15 +22,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={inter.className}>
         <Providers>{children}</Providers>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
-              }
-            `,
-          }}
-        />
       </body>
     </html>
   );
