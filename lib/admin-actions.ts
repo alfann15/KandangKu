@@ -944,6 +944,202 @@ export async function resetUserPassword(
 }
 
 /**
+ * Get transaksi detail untuk edit (admin only)
+ */
+export async function getTransaksiForEdit(id: string): Promise<
+  ActionResponse<{
+    id: string;
+    nama_pelanggan: string;
+    tipe_transaksi: string;
+    status_bayar: string;
+    total_bayar: number;
+    diskon: number;
+    detail_pesanan: Array<{
+      id: number;
+      id_kategori: number;
+      nama_kategori: string;
+      jumlah_ekor: number;
+      harga_satuan: number;
+    }>;
+  }>
+> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'UNAUTHORIZED',
+      };
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa edit transaksi',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    const transaksi = await prisma.transaksi.findUnique({
+      where: { id },
+      include: {
+        detail_pesanan: {
+          include: {
+            kategori: { select: { nama_kategori: true } },
+          },
+        },
+      },
+    });
+
+    if (!transaksi) {
+      return {
+        success: false,
+        message: 'Transaksi tidak ditemukan',
+        error: 'NOT_FOUND',
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Transaksi berhasil diambil',
+      data: {
+        id: transaksi.id,
+        nama_pelanggan: transaksi.nama_pelanggan,
+        tipe_transaksi: transaksi.tipe_transaksi,
+        status_bayar: transaksi.status_bayar,
+        total_bayar: transaksi.total_bayar,
+        diskon: transaksi.diskon,
+        detail_pesanan: transaksi.detail_pesanan.map((d) => ({
+          id: d.id,
+          id_kategori: d.id_kategori,
+          nama_kategori: d.kategori.nama_kategori,
+          jumlah_ekor: d.jumlah_ekor,
+          harga_satuan: d.harga_satuan,
+        })),
+      },
+    };
+  } catch (error) {
+    console.error('Error getting transaksi:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil transaksi',
+      error: 'FETCH_ERROR',
+    };
+  }
+}
+
+/**
+ * Edit detail transaksi (jumlah ekor)
+ */
+const EditDetailTransaksiSchema = z.object({
+  id_detail: z.number().int().positive(),
+  jumlah_ekor_baru: z.number().int().positive('Jumlah harus lebih dari 0'),
+});
+
+type EditDetailTransaksiInput = z.infer<typeof EditDetailTransaksiSchema>;
+
+export async function editDetailTransaksi(
+  input: EditDetailTransaksiInput
+): Promise<ActionResponse> {
+  try {
+    const validated = EditDetailTransaksiSchema.parse(input);
+
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'UNAUTHORIZED',
+      };
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa edit transaksi',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    const detail = await prisma.detailTransaksi.findUnique({
+      where: { id: validated.id_detail },
+      include: {
+        transaksi: true,
+        kategori: true,
+      },
+    });
+
+    if (!detail) {
+      return {
+        success: false,
+        message: 'Detail transaksi tidak ditemukan',
+        error: 'NOT_FOUND',
+      };
+    }
+
+    const selisih_ekor = validated.jumlah_ekor_baru - detail.jumlah_ekor;
+    const selisih_harga = selisih_ekor * detail.harga_satuan;
+
+    // Update dalam transaction
+    await prisma.$transaction(async (tx) => {
+      // Update detail transaksi
+      await tx.detailTransaksi.update({
+        where: { id: validated.id_detail },
+        data: { jumlah_ekor: validated.jumlah_ekor_baru },
+      });
+
+      // Update total_bayar transaksi
+      await tx.transaksi.update({
+        where: { id: detail.transaksi.id },
+        data: {
+          total_bayar: detail.transaksi.total_bayar + selisih_harga,
+        },
+      });
+
+      // Update stok jika LANGSUNG
+      if (detail.transaksi.tipe_transaksi === 'LANGSUNG') {
+        await tx.kategoriAyam.update({
+          where: { id: detail.id_kategori },
+          data: {
+            stok_bebas: detail.kategori.stok_bebas - selisih_ekor,
+          },
+        });
+      } else if (detail.transaksi.tipe_transaksi === 'PRE_ORDER') {
+        // Update booking stok untuk PO
+        await tx.kategoriAyam.update({
+          where: { id: detail.id_kategori },
+          data: {
+            stok_booking: detail.kategori.stok_booking - selisih_ekor,
+          },
+        });
+      }
+    });
+
+    return {
+      success: true,
+      message: `Detail transaksi berhasil diubah (${detail.jumlah_ekor} → ${validated.jumlah_ekor_baru} ekor)`,
+    };
+  } catch (error) {
+    console.error('Error editing detail transaksi:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: 'Data tidak valid: ' + error.errors[0].message,
+        error: 'VALIDATION_ERROR',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Gagal edit transaksi',
+      error: 'UPDATE_ERROR',
+    };
+  }
+}
+
+/**
  * Get all kategori pengeluaran
  */
 export async function getKategoriPengeluaranForAdmin(): Promise<

@@ -277,6 +277,7 @@ export default function DashboardPage() {
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Nilai</TableHead>
                     <TableHead className="text-right">Bayar</TableHead>
+                    {role === 'ADMIN' && <TableHead className="text-right">Aksi</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -312,6 +313,17 @@ export default function DashboardPage() {
                       </TableCell>
                       <TableCell className={`text-right font-semibold tabular-nums ${t.dibatalkan ? 'line-through text-muted-foreground' : ''}`}>{formatRupiah(t.total_efektif)}</TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">{formatRupiah(t.total_bayar)}</TableCell>
+                      {role === 'ADMIN' && (
+                        <TableCell className="text-right">
+                          {!t.dibatalkan && (
+                            <Link href={`/admin/edit-transaksi?id=${t.id}`}>
+                              <Button size="sm" variant="outline" className="gap-1.5">
+                                Edit
+                              </Button>
+                            </Link>
+                          )}
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
