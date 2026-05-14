@@ -298,6 +298,8 @@ export default function KasirPage() {
           items: cart.map((i) => ({ id_kategori: i.kategori_id, jumlah_ekor: i.jumlah_ekor, harga_satuan: i.harga })),
           dp: parseInt(dp_po) || 0,
           diskon: diskon_nilai,
+          status_bayar: 'DP',
+          total_bayar: parseInt(dp_po) || 0,
           tanggal_jatuh_tempo: tanggal_jatuh_tempo || undefined,
           tipe_transaksi: 'PRE_ORDER',
         });
