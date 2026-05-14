@@ -652,6 +652,26 @@ export default function KasirPage() {
                   >
                     <AlertTriangle className="h-4 w-4" /> Mati PO
                   </button>
+                  {role === 'ADMIN' && (
+                    <>
+                      <Link href="/dashboard" className="block">
+                        <button 
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 border-t border-border"
+                          onClick={() => setOpenMobileMenu(false)}
+                        >
+                          <LayoutDashboard className="h-4 w-4" /> Dashboard
+                        </button>
+                      </Link>
+                      <Link href="/admin" className="block">
+                        <button 
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
+                          onClick={() => setOpenMobileMenu(false)}
+                        >
+                          <ShieldCheck className="h-4 w-4" /> Admin
+                        </button>
+                      </Link>
+                    </>
+                  )}
                 </div>
               )}
             </div>
