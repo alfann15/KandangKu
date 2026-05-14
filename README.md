@@ -104,11 +104,12 @@ Aplikasi web modern yang dirancang khusus untuk usaha penjualan ayam skala micro
 - Status stok real-time
 - Tabel transaksi terbaru dengan kolom **Nilai** (barang keluar) dan **Bayar** (uang masuk) terpisah, badge DIBATALKAN untuk transaksi yang dibatalkan
 - **Rekap periode** dengan preset: Hari Ini, Kemarin, 7 Hari, 30 Hari, Bulan Ini, Bulan Lalu, atau range custom
-- Breakdown harian, per kasir, per kategori, dan mutasi stok
+- Breakdown harian, per kasir, per kategori, per pengeluaran, dan mutasi stok
 
 ### Admin Panel
-- Update harga harian per kategori
-- Override stok (siap jual &amp; booking) dengan validasi
+- **Manajemen Kategori Ayam**: Buat, update harga, override stok, disable/enable, hapus kategori
+- **Manajemen Kategori Pengeluaran**: Buat, disable/enable, hapus kategori
+- **Manajemen User**: Buat user baru, ubah role (ADMIN/KASIR), hapus user
 - History mutasi stok 30 transaksi terakhir
 - Role-based access control (`ADMIN` vs `KASIR`)
 
@@ -524,6 +525,10 @@ Selesai (sudah ada di aplikasi):
 - [x] Search/filter di tab Piutang
 - [x] Pembatalan transaksi (refund / tanpa refund + role-based time window)
 - [x] Dashboard chart tren omzet 7 hari
+- [x] Breakdown pengeluaran di rekap periode
+- [x] Manajemen kategori ayam (create, disable, delete)
+- [x] Manajemen kategori pengeluaran (create, disable, delete)
+- [x] Manajemen user (create, delete, change role)
 
 Masih dalam pertimbangan:
 
