@@ -399,3 +399,83 @@ export async function getRekapPeriode(
     };
   }
 }
+
+
+
+/**
+ * Export rekap ke Excel
+ */
+export async function exportRekapToExcel(
+  input: RekapInput,
+  rekapData: RekapData
+): Promise<ActionResponse> {
+  try {
+    const { default: XLSX } = await import('xlsx');
+
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: Summary
+    const summaryData = [
+      ['REKAP PERIODE', rekapData.periode_label],
+      [],
+      ['Metrik', 'Nilai'],
+      ['Total Penjualan', rekapData.summary.total_penjualan],
+      ['Total Kas Masuk', rekapData.summary.total_kas_masuk],
+      ['Total Diskon', rekapData.summary.total_diskon],
+      ['Total Pengeluaran', rekapData.summary.total_pengeluaran],
+      ['Jumlah Transaksi', rekapData.summary.jumlah_transaksi],
+      ['Rata-rata Kas/Hari', rekapData.summary.rata_rata_kas_per_hari],
+    ];
+    const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
+
+    // Sheet 2: Daily Breakdown
+    const dailyData = [
+      ['Tanggal', 'Transaksi', 'Total Kas', 'Total Penjualan'],
+      ...rekapData.daily_breakdown.map((d) => [d.tanggal, d.jumlah_transaksi, d.total_kas, d.total_penjualan]),
+    ];
+    const ws2 = XLSX.utils.aoa_to_sheet(dailyData);
+    XLSX.utils.book_append_sheet(wb, ws2, 'Harian');
+
+    // Sheet 3: Kasir Breakdown
+    const kasirData = [
+      ['Kasir', 'Transaksi', 'Total Kas', 'Persentase'],
+      ...rekapData.kasir_breakdown.map((k) => [k.kasir_nama, k.jumlah_transaksi, k.total_kas, `${k.persentase}%`]),
+    ];
+    const ws3 = XLSX.utils.aoa_to_sheet(kasirData);
+    XLSX.utils.book_append_sheet(wb, ws3, 'Per Kasir');
+
+    // Sheet 4: Kategori Breakdown
+    const kategoriData = [
+      ['Kategori', 'Total Ekor', 'Estimasi Pendapatan'],
+      ...rekapData.kategori_breakdown.map((k) => [k.nama_kategori, k.total_ekor, k.estimasi_pendapatan]),
+    ];
+    const ws4 = XLSX.utils.aoa_to_sheet(kategoriData);
+    XLSX.utils.book_append_sheet(wb, ws4, 'Per Kategori');
+
+    // Sheet 5: Pengeluaran Breakdown
+    const pengeluaranData = [
+      ['Kategori', 'Total Pengeluaran'],
+      ...rekapData.pengeluaran_breakdown.map((p) => [p.kategori_nama, p.total_pengeluaran]),
+    ];
+    const ws5 = XLSX.utils.aoa_to_sheet(pengeluaranData);
+    XLSX.utils.book_append_sheet(wb, ws5, 'Pengeluaran');
+
+    // Write file
+    const filename = `Rekap_${input.start_date}_${input.end_date}.xlsx`;
+    XLSX.writeFile(wb, filename);
+
+    return {
+      success: true,
+      message: `File ${filename} berhasil diunduh`,
+    };
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
+    return {
+      success: false,
+      message: 'Gagal export ke Excel',
+      error: 'EXPORT_ERROR',
+    };
+  }
+}

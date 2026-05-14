@@ -25,7 +25,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/lib/use-toast';
 import { formatRupiah } from '@/lib/utils';
-import { getRekapPeriode, type RekapData } from '@/lib/rekap-actions';
+import { getRekapPeriode, type RekapData, exportRekapToExcel } from '@/lib/rekap-actions';
 import {
   ArrowLeft,
   Calendar,
@@ -41,6 +41,7 @@ import {
   Percent,
   Loader2,
   Inbox,
+  Download,
 } from 'lucide-react';
 
 // ============================================
@@ -138,6 +139,7 @@ export default function RekapPage() {
   const [data, setData] = useState<RekapData | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('HARIAN');
+  const [exporting, setExporting] = useState(false);
 
   const loadRekap = useCallback(
     async (s: string, e: string) => {
@@ -197,6 +199,18 @@ export default function RekapPage() {
     loadRekap(startDate, endDate);
   };
 
+  const handleExportExcel = async () => {
+    if (!data) return;
+    setExporting(true);
+    const result = await exportRekapToExcel({ start_date: startDate, end_date: endDate }, data);
+    setExporting(false);
+    if (result.success) {
+      toast({ variant: 'success', title: 'Berhasil', description: result.message });
+    } else {
+      toast({ variant: 'destructive', title: 'Gagal', description: result.message });
+    }
+  };
+
   if (status === 'loading') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -250,6 +264,18 @@ export default function RekapPage() {
             >
               <RotateCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
+            {data && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportExcel}
+                disabled={exporting}
+                className="gap-1.5"
+              >
+                <Download className="h-4 w-4" />
+                {exporting ? 'Mengunduh...' : 'Excel'}
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
