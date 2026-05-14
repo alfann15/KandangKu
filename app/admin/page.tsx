@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/lib/use-toast';
 import { formatRupiah } from '@/lib/utils';
-import { getKategoriForAdmin, updateHargaKategori, updateStokKategori, getMutasiStokHistory, createKategori, getKategoriPengeluaranForAdmin, createKategoriPengeluaran, toggleKategoriPengeluaran, toggleKategoriAyam, deleteKategoriAyam, deleteKategoriPengeluaran, getAllUsers, createUser, deleteUser, changeUserRole } from '@/lib/admin-actions';
+import { getKategoriForAdmin, updateHargaKategori, updateStokKategori, getMutasiStokHistory, createKategori, getKategoriPengeluaranForAdmin, createKategoriPengeluaran, toggleKategoriPengeluaran, toggleKategoriAyam, deleteKategoriAyam, deleteKategoriPengeluaran, getAllUsers, createUser, deleteUser, changeUserRole, resetUserPassword } from '@/lib/admin-actions';
 import {
   LogOut, Pencil, ShieldCheck, Tag, Boxes, History,
   LayoutDashboard, Bird, BarChart3, Loader2, Inbox,
@@ -42,6 +42,8 @@ export default function AdminPage() {
   const [openCreateKategori, setOpenCreateKategori] = useState(false);
   const [openCreateKategoriPengeluaran, setOpenCreateKategoriPengeluaran] = useState(false);
   const [openCreateUser, setOpenCreateUser] = useState(false);
+  const [openResetPassword, setOpenResetPassword] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedKategori, setSelectedKategori] = useState<Kategori | null>(null);
   const [edit_harga, setEditHarga] = useState('');
   const [edit_stok_bebas, setEditStokBebas] = useState('');
@@ -53,6 +55,7 @@ export default function AdminPage() {
   const [create_user_username, setCreateUserUsername] = useState('');
   const [create_user_password, setCreateUserPassword] = useState('');
   const [create_user_role, setCreateUserRole] = useState<'ADMIN' | 'KASIR'>('KASIR');
+  const [reset_password, setResetPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadData = async (silent = false) => {
@@ -213,6 +216,21 @@ export default function AdminPage() {
     if (result.success) {
       toast({ variant: 'success', title: 'Berhasil', description: result.message });
       await loadData();
+    } else {
+      toast({ variant: 'destructive', title: 'Gagal', description: result.message });
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedUser || !reset_password) return;
+    setIsSubmitting(true);
+    const result = await resetUserPassword({ id: selectedUser.id, password_baru: reset_password });
+    setIsSubmitting(false);
+    if (result.success) {
+      toast({ variant: 'success', title: 'Berhasil', description: result.message });
+      setOpenResetPassword(false);
+      setResetPassword('');
+      setSelectedUser(null);
     } else {
       toast({ variant: 'destructive', title: 'Gagal', description: result.message });
     }
@@ -444,14 +462,24 @@ export default function AdminPage() {
                       </select>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="gap-1.5"
-                        onClick={() => handleDeleteUser(u.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" /> Hapus
-                      </Button>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5"
+                          onClick={() => { setSelectedUser(u); setResetPassword(''); setOpenResetPassword(true); }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" /> Reset Pass
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="gap-1.5"
+                          onClick={() => handleDeleteUser(u.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Hapus
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -662,6 +690,31 @@ export default function AdminPage() {
             <Button onClick={handleCreateUser} disabled={isSubmitting || !create_user_nama || !create_user_username || !create_user_password}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSubmitting ? 'Membuat...' : 'Buat User'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={openResetPassword} onOpenChange={setOpenResetPassword}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5 text-muted-foreground" /> Reset Password
+            </DialogTitle>
+            <DialogDescription>{selectedUser?.nama}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Password Baru</Label>
+              <Input type="password" placeholder="Password minimal 6 karakter" value={reset_password} onChange={(e) => setResetPassword(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenResetPassword(false)} disabled={isSubmitting}>Batal</Button>
+            <Button onClick={handleResetPassword} disabled={isSubmitting || !reset_password}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? 'Mereset...' : 'Reset Password'}
             </Button>
           </DialogFooter>
         </DialogContent>

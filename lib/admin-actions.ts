@@ -868,6 +868,82 @@ export async function changeUserRole(
 }
 
 /**
+ * Reset password user
+ */
+const ResetPasswordSchema = z.object({
+  id: z.number().int().positive(),
+  password_baru: z.string().min(6, 'Password minimal 6 karakter'),
+});
+
+type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>;
+
+export async function resetUserPassword(
+  input: ResetPasswordInput
+): Promise<ActionResponse> {
+  try {
+    const validated = ResetPasswordSchema.parse(input);
+
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'UNAUTHORIZED',
+      };
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa reset password',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: validated.id },
+    });
+
+    if (!user) {
+      return {
+        success: false,
+        message: 'User tidak ditemukan',
+        error: 'NOT_FOUND',
+      };
+    }
+
+    // Hash password baru
+    const hashedPassword = await bcrypt.hash(validated.password_baru, 10);
+
+    await prisma.user.update({
+      where: { id: validated.id },
+      data: { password: hashedPassword },
+    });
+
+    return {
+      success: true,
+      message: `Password ${user.nama} berhasil direset`,
+    };
+  } catch (error) {
+    console.error('Error resetting password:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: 'Data tidak valid: ' + error.errors[0].message,
+        error: 'VALIDATION_ERROR',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Gagal reset password',
+      error: 'UPDATE_ERROR',
+    };
+  }
+}
+
+/**
  * Get all kategori pengeluaran
  */
 export async function getKategoriPengeluaranForAdmin(): Promise<
