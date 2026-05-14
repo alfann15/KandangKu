@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int             @id @default(autoincrement())
+  nama            String
+  role            String
+  username        String          @unique
+  password        String
+  transaksi       Transaksi[]
+  mutasi_stok     MutasiStok[]
+  pengeluaran     Pengeluaran[]
+  pembayaran_log  PembayaranLog[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model KategoriAyam {
+  id             Int               @id @default(autoincrement())
+  nama_kategori  String
+  harga_hari_ini Int
+  stok_bebas     Int               @default(0)
+  stok_booking   Int               @default(0)
+  detail_pesanan DetailTransaksi[]
+  mutasi_stok    MutasiStok[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model Transaksi {
+  id              String            @id @default(cuid())
+  nama_pelanggan  String
+  nomor_wa        String?
+  id_pelanggan    Int?
+  pelanggan       Pelanggan?        @relation(fields: [id_pelanggan], references: [id])
+  tipe_transaksi  String
+  status_bayar    String
+  total_bayar     Int
+  diskon          Int               @default(0)
+  id_kasir        Int
+  kasir           User              @relation(fields: [id_kasir], references: [id], onDelete: Cascade)
+  waktu_transaksi DateTime          @default(now())
+  tanggal_jatuh_tempo DateTime?
+  dibatalkan_pada DateTime?
+  alasan_batal    String?
+  detail_pesanan  DetailTransaksi[]
+  pembayaran_log  PembayaranLog[]
+
+  @@index([id_kasir])
+  @@index([waktu_transaksi])
+  @@index([id_pelanggan])
+  @@index([dibatalkan_pada])
+}
+
+model DetailTransaksi {
+  id            Int          @id @default(autoincrement())
+  id_transaksi  String
+  id_kategori   Int
+  jumlah_ekor   Int
+  harga_satuan  Int
+  transaksi     Transaksi    @relation(fields: [id_transaksi], references: [id], onDelete: Cascade)
+  kategori      KategoriAyam @relation(fields: [id_kategori], references: [id])
+
+  @@index([id_transaksi])
+  @@index([id_kategori])
+}
+
+model MutasiStok {
+  id           Int          @id @default(autoincrement())
+  id_kategori  Int
+  jumlah_ekor  Int
+  tipe_mutasi  String
+  id_kasir     Int
+  kasir        User         @relation(fields: [id_kasir], references: [id], onDelete: Cascade)
+  kategori     KategoriAyam @relation(fields: [id_kategori], references: [id])
+  waktu_mutasi DateTime     @default(now())
+
+  @@index([id_kasir])
+  @@index([id_kategori])
+  @@index([waktu_mutasi])
+}
+
+
+
+model KategoriPengeluaran {
+  id          Int           @id @default(autoincrement())
+  nama        String        @unique
+  aktif       Boolean       @default(true)
+  pengeluaran Pengeluaran[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Pengeluaran {
+  id          Int                  @id @default(autoincrement())
+  jumlah      Int
+  keterangan  String?
+  id_kategori Int?
+  kategori    KategoriPengeluaran? @relation(fields: [id_kategori], references: [id])
+  id_kasir    Int
+  kasir       User                 @relation(fields: [id_kasir], references: [id], onDelete: Cascade)
+  waktu       DateTime             @default(now())
+
+  @@index([id_kasir])
+  @@index([waktu])
+  @@index([id_kategori])
+}
+
+
+model Pelanggan {
+  id              Int         @id @default(autoincrement())
+  nama            String
+  nama_normalized String      @unique
+  nomor_wa        String?
+  transaksi       Transaksi[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([nama_normalized])
+}
+
+
+model PembayaranLog {
+  id              Int       @id @default(autoincrement())
+  id_transaksi    String
+  transaksi       Transaksi @relation(fields: [id_transaksi], references: [id], onDelete: Cascade)
+  jumlah          Int
+  diskon_tambahan Int       @default(0)
+  status_sebelum  String
+  status_sesudah  String
+  id_kasir        Int
+  kasir           User      @relation(fields: [id_kasir], references: [id], onDelete: Cascade)
+  keterangan      String?
+  waktu           DateTime  @default(now())
+
+  @@index([id_transaksi])
+  @@index([waktu])
+}

@@ -1,0 +1,128 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# ============================================
+# Dependencies
+# ============================================
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# ============================================
+# Next.js
+# ============================================
+/.next/
+/out/
+next-env.d.ts
+
+# ============================================
+# Production / Build
+# ============================================
+/build
+/dist
+
+# ============================================
+# TypeScript
+# ============================================
+*.tsbuildinfo
+
+# ============================================
+# Testing
+# ============================================
+/coverage
+/.nyc_output
+
+# ============================================
+# Environment files
+# ============================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+# Keep .env.example tracked
+
+# ============================================
+# Logs
+# ============================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dev runtime artifacts (proses dev server)
+dev-out.txt
+dev-err.txt
+dev-log.txt
+dev-pid.txt
+
+# ============================================
+# Cache
+# ============================================
+.cache/
+.parcel-cache/
+.turbo/
+.eslintcache
+.stylelintcache
+
+# ============================================
+# Prisma
+# ============================================
+prisma/dev.db
+prisma/dev.db-journal
+prisma/migrations/dev/
+
+# ============================================
+# Deployment
+# ============================================
+.vercel
+.netlify
+
+# ============================================
+# IDE / Editor
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+.history/
+
+# ============================================
+# OS — macOS
+# ============================================
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# ============================================
+# OS — Windows
+# ============================================
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# ============================================
+# OS — Linux
+# ============================================
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ============================================
+# Misc
+# ============================================
+*.pem
+*.key
+*.cert
+*.crt
