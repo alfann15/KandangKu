@@ -34,6 +34,7 @@ type KategoriPublic = {
 async function fetchKategoriPublic(): Promise<KategoriPublic[]> {
   try {
     return await prisma.kategoriAyam.findMany({
+      where: { aktif: true },
       orderBy: { harga_hari_ini: 'asc' },
       select: {
         id: true,

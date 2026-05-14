@@ -123,7 +123,7 @@ export async function createTransaksiLangsung(
     // Ambil semua kategori yang dibutuhkan
     const kategori_ids = validated.items.map((i) => i.id_kategori);
     const kategoriList = await prisma.kategoriAyam.findMany({
-      where: { id: { in: kategori_ids } },
+      where: { id: { in: kategori_ids }, aktif: true },
     });
     if (kategoriList.length !== kategori_ids.length) {
       return { success: false, message: 'Beberapa kategori ayam tidak ditemukan', error: 'INVALID_KATEGORI' };
@@ -241,6 +241,7 @@ export async function getKategoriAyamDenganStok() {
     }
 
     const kategori = await prisma.kategoriAyam.findMany({
+      where: { aktif: true },
       orderBy: { nama_kategori: 'asc' },
       select: {
         id: true,
@@ -461,7 +462,7 @@ export async function createPreOrder(
     const id_kasir = parseInt(session.user.id as string, 10);
 
     const kategori_ids = validated.items.map((i) => i.id_kategori);
-    const kategoriList = await prisma.kategoriAyam.findMany({ where: { id: { in: kategori_ids } } });
+    const kategoriList = await prisma.kategoriAyam.findMany({ where: { id: { in: kategori_ids }, aktif: true } });
     if (kategoriList.length !== kategori_ids.length) {
       return { success: false, message: 'Beberapa kategori tidak ditemukan', error: 'INVALID_KATEGORI' };
     }
