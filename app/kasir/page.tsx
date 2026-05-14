@@ -601,6 +601,7 @@ export default function KasirPage() {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
+            {/* Desktop buttons */}
             <Button variant="outline" size="sm" className="gap-1.5 hidden sm:inline-flex" onClick={() => setOpenCatatMati(true)}>
               <AlertTriangle className="h-4 w-4" /> Mati
             </Button>
@@ -613,18 +614,27 @@ export default function KasirPage() {
             <Button variant="outline" size="sm" className="gap-1.5 hidden sm:inline-flex" onClick={() => setOpenKurangiEkorPo(true)}>
               <AlertTriangle className="h-4 w-4" /> Mati PO
             </Button>
-            <Button variant="outline" size="sm" className="sm:hidden h-9 w-9 p-0" onClick={() => setOpenCatatMati(true)} aria-label="Catat mati">
-              <AlertTriangle className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" className="sm:hidden h-9 w-9 p-0" onClick={() => setOpenTambahStok(true)} aria-label="Tambah stok">
-              <Package className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" className="sm:hidden h-9 w-9 p-0" onClick={() => setOpenPengeluaran(true)} aria-label="Pengeluaran">
-              <Wallet className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" className="sm:hidden h-9 w-9 p-0" onClick={() => setOpenKurangiEkorPo(true)} aria-label="Catat ayam mati PO">
-              <AlertTriangle className="h-4 w-4" />
-            </Button>
+            
+            {/* Mobile menu dropdown */}
+            <div className="sm:hidden">
+              <select 
+                className="h-9 px-2 rounded-md border border-input bg-background text-sm"
+                onChange={(e) => {
+                  if (e.target.value === 'mati') setOpenCatatMati(true);
+                  else if (e.target.value === 'stok') setOpenTambahStok(true);
+                  else if (e.target.value === 'pengeluaran') setOpenPengeluaran(true);
+                  else if (e.target.value === 'mati-po') setOpenKurangiEkorPo(true);
+                  e.target.value = '';
+                }}
+              >
+                <option value="">Menu</option>
+                <option value="mati">Catat Mati</option>
+                <option value="stok">Tambah Stok</option>
+                <option value="pengeluaran">Pengeluaran</option>
+                <option value="mati-po">Mati PO</option>
+              </select>
+            </div>
+
             {role === 'ADMIN' && (
               <>
                 <Link href="/dashboard">
