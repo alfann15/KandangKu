@@ -1205,7 +1205,7 @@ export default function KasirPage() {
         onOpenChange={setOpenKurangiEkorPo}
         kategoriList={kategori}
         onSuccess={() => {
-          loadKategori();
+          refreshKategori();
           toast({ variant: 'success', title: 'Berhasil', description: 'Ekor PO berhasil dikurangi' });
         }}
       />
