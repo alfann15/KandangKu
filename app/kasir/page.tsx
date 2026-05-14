@@ -96,6 +96,9 @@ export default function KasirPage() {
 
   // Pembatalan transaksi
   const [openMobileMenu, setOpenMobileMenu] = useState(false);
+  const [openBatal, setOpenBatal] = useState(false);
+  const [selectedForBatal, setSelectedForBatal] = useState<Piutang | null>(null);
+  const [alasan_batal, setAlasanBatal] = useState('');
   const [refund_choice, setRefundChoice] = useState<'REFUND' | 'NO_REFUND'>('REFUND');
   const [isSubmittingBatal, setIsSubmittingBatal] = useState(false);
 
