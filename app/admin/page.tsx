@@ -37,6 +37,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [auto_refresh, setAutoRefresh] = useState(true);
+  const [openMobileMenu, setOpenMobileMenu] = useState(false);
   const [openEditHarga, setOpenEditHarga] = useState(false);
   const [openEditStok, setOpenEditStok] = useState(false);
   const [openCreateKategori, setOpenCreateKategori] = useState(false);
@@ -259,6 +260,7 @@ export default function AdminPage() {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
+            {/* Desktop buttons */}
             <Link href="/kasir" className="hidden sm:block">
               <Button variant="outline" size="sm" className="gap-1.5">
                 <Bird className="h-4 w-4" /> Kasir
@@ -279,6 +281,55 @@ export default function AdminPage() {
                 <BarChart3 className="h-4 w-4" /> Rekap
               </Button>
             </Link>
+
+            {/* Mobile menu */}
+            <div className="relative sm:hidden">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-9 w-9 p-0"
+                onClick={() => setOpenMobileMenu(!openMobileMenu)}
+              >
+                <BarChart3 className="h-4 w-4" />
+              </Button>
+              {openMobileMenu && (
+                <div className="absolute right-0 mt-2 w-40 rounded-lg border border-border bg-background shadow-lg z-50">
+                  <Link href="/kasir" className="block">
+                    <button 
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 border-b border-border"
+                      onClick={() => setOpenMobileMenu(false)}
+                    >
+                      <Bird className="h-4 w-4" /> Kasir
+                    </button>
+                  </Link>
+                  <Link href="/admin/edit-transaksi/list" className="block">
+                    <button 
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 border-b border-border"
+                      onClick={() => setOpenMobileMenu(false)}
+                    >
+                      <Pencil className="h-4 w-4" /> Edit Transaksi
+                    </button>
+                  </Link>
+                  <Link href="/dashboard" className="block">
+                    <button 
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 border-b border-border"
+                      onClick={() => setOpenMobileMenu(false)}
+                    >
+                      <LayoutDashboard className="h-4 w-4" /> Dashboard
+                    </button>
+                  </Link>
+                  <Link href="/rekap" className="block">
+                    <button 
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
+                      onClick={() => setOpenMobileMenu(false)}
+                    >
+                      <BarChart3 className="h-4 w-4" /> Rekap
+                    </button>
+                  </Link>
+                </div>
+              )}
+            </div>
+
             <Button variant="outline" size="sm" className="h-9 w-9 p-0" onClick={() => loadData()} disabled={refreshing} aria-label="Refresh">
               <RotateCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
