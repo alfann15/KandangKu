@@ -13,15 +13,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/lib/use-toast';
 import { formatRupiah } from '@/lib/utils';
-import { getKategoriForAdmin, updateHargaKategori, updateStokKategori, getMutasiStokHistory } from '@/lib/admin-actions';
+import { getKategoriForAdmin, updateHargaKategori, updateStokKategori, getMutasiStokHistory, createKategori, getKategoriPengeluaranForAdmin, createKategoriPengeluaran, toggleKategoriPengeluaran, toggleKategoriAyam, deleteKategoriAyam, deleteKategoriPengeluaran, getAllUsers, createUser, deleteUser, changeUserRole } from '@/lib/admin-actions';
 import {
   LogOut, Pencil, ShieldCheck, Tag, Boxes, History,
   LayoutDashboard, Bird, BarChart3, Loader2, Inbox,
-  RotateCw, Pause, Play,
+  RotateCw, Pause, Play, Plus, Eye, EyeOff, Trash2, Users,
 } from 'lucide-react';
 
-type Kategori = { id: number; nama_kategori: string; harga_hari_ini: number; stok_bebas: number; stok_booking: number };
+type Kategori = { id: number; nama_kategori: string; harga_hari_ini: number; stok_bebas: number; stok_booking: number; aktif: boolean };
 type MutasiHistory = { id: number; kategori_nama: string; jumlah_ekor: number; tipe_mutasi: string; kasir_nama: string; waktu_mutasi: string };
+type KategoriPengeluaran = { id: number; nama: string; aktif: boolean };
+type User = { id: number; nama: string; username: string; role: string };
 
 export default function AdminPage() {
   const router = useRouter();
@@ -30,24 +32,38 @@ export default function AdminPage() {
 
   const [kategori_list, setKategoriList] = useState<Kategori[]>([]);
   const [mutasi_history, setMutasiHistory] = useState<MutasiHistory[]>([]);
+  const [kategori_pengeluaran, setKategoriPengeluaran] = useState<KategoriPengeluaran[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [auto_refresh, setAutoRefresh] = useState(true);
   const [openEditHarga, setOpenEditHarga] = useState(false);
   const [openEditStok, setOpenEditStok] = useState(false);
+  const [openCreateKategori, setOpenCreateKategori] = useState(false);
+  const [openCreateKategoriPengeluaran, setOpenCreateKategoriPengeluaran] = useState(false);
+  const [openCreateUser, setOpenCreateUser] = useState(false);
   const [selectedKategori, setSelectedKategori] = useState<Kategori | null>(null);
   const [edit_harga, setEditHarga] = useState('');
   const [edit_stok_bebas, setEditStokBebas] = useState('');
   const [edit_stok_booking, setEditStokBooking] = useState('');
+  const [create_nama, setCreateNama] = useState('');
+  const [create_harga, setCreateHarga] = useState('');
+  const [create_nama_pengeluaran, setCreateNamaPengeluaran] = useState('');
+  const [create_user_nama, setCreateUserNama] = useState('');
+  const [create_user_username, setCreateUserUsername] = useState('');
+  const [create_user_password, setCreateUserPassword] = useState('');
+  const [create_user_role, setCreateUserRole] = useState<'ADMIN' | 'KASIR'>('KASIR');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadData = async (silent = false) => {
     if (!silent) setRefreshing(true);
     try {
-      const [kategoriRes, mutasiRes] = await Promise.all([getKategoriForAdmin(), getMutasiStokHistory(30)]);
+      const [kategoriRes, mutasiRes, pengeluaranRes, usersRes] = await Promise.all([getKategoriForAdmin(), getMutasiStokHistory(30), getKategoriPengeluaranForAdmin(), getAllUsers()]);
       if (kategoriRes.error === 'FORBIDDEN') { router.push('/kasir'); return; }
       if (kategoriRes.success && kategoriRes.data) setKategoriList(kategoriRes.data);
       if (mutasiRes.success && mutasiRes.data) setMutasiHistory(mutasiRes.data);
+      if (pengeluaranRes.success && pengeluaranRes.data) setKategoriPengeluaran(pengeluaranRes.data);
+      if (usersRes.success && usersRes.data) setUsers(usersRes.data);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -85,6 +101,118 @@ export default function AdminPage() {
     if (result.success) {
       toast({ variant: 'success', title: 'Berhasil', description: result.message });
       setOpenEditStok(false); await loadData();
+    } else {
+      toast({ variant: 'destructive', title: 'Gagal', description: result.message });
+    }
+  };
+
+  const handleCreateKategori = async () => {
+    if (!create_nama || !create_harga) return;
+    setIsSubmitting(true);
+    const result = await createKategori({ nama_kategori: create_nama, harga_hari_ini: parseInt(create_harga) });
+    setIsSubmitting(false);
+    if (result.success) {
+      toast({ variant: 'success', title: 'Berhasil', description: result.message });
+      setOpenCreateKategori(false);
+      setCreateNama('');
+      setCreateHarga('');
+      await loadData();
+    } else {
+      toast({ variant: 'destructive', title: 'Gagal', description: result.message });
+    }
+  };
+
+  const handleCreateKategoriPengeluaran = async () => {
+    if (!create_nama_pengeluaran) return;
+    setIsSubmitting(true);
+    const result = await createKategoriPengeluaran({ nama: create_nama_pengeluaran });
+    setIsSubmitting(false);
+    if (result.success) {
+      toast({ variant: 'success', title: 'Berhasil', description: result.message });
+      setOpenCreateKategoriPengeluaran(false);
+      setCreateNamaPengeluaran('');
+      await loadData();
+    } else {
+      toast({ variant: 'destructive', title: 'Gagal', description: result.message });
+    }
+  };
+
+  const handleToggleKategoriPengeluaran = async (id: number, aktif: boolean) => {
+    const result = await toggleKategoriPengeluaran({ id, aktif: !aktif });
+    if (result.success) {
+      toast({ variant: 'success', title: 'Berhasil', description: result.message });
+      await loadData();
+    } else {
+      toast({ variant: 'destructive', title: 'Gagal', description: result.message });
+    }
+  };
+
+  const handleToggleKategoriAyam = async (id: number, aktif: boolean) => {
+    const result = await toggleKategoriAyam({ id, aktif: !aktif });
+    if (result.success) {
+      toast({ variant: 'success', title: 'Berhasil', description: result.message });
+      await loadData();
+    } else {
+      toast({ variant: 'destructive', title: 'Gagal', description: result.message });
+    }
+  };
+
+  const handleDeleteKategoriAyam = async (id: number) => {
+    if (!confirm('Yakin ingin menghapus kategori ini?')) return;
+    const result = await deleteKategoriAyam({ id });
+    if (result.success) {
+      toast({ variant: 'success', title: 'Berhasil', description: result.message });
+      await loadData();
+    } else {
+      toast({ variant: 'destructive', title: 'Gagal', description: result.message });
+    }
+  };
+
+  const handleDeleteKategoriPengeluaran = async (id: number) => {
+    if (!confirm('Yakin ingin menghapus kategori ini?')) return;
+    const result = await deleteKategoriPengeluaran({ id });
+    if (result.success) {
+      toast({ variant: 'success', title: 'Berhasil', description: result.message });
+      await loadData();
+    } else {
+      toast({ variant: 'destructive', title: 'Gagal', description: result.message });
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!create_user_nama || !create_user_username || !create_user_password) return;
+    setIsSubmitting(true);
+    const result = await createUser({ nama: create_user_nama, username: create_user_username, password: create_user_password, role: create_user_role });
+    setIsSubmitting(false);
+    if (result.success) {
+      toast({ variant: 'success', title: 'Berhasil', description: result.message });
+      setOpenCreateUser(false);
+      setCreateUserNama('');
+      setCreateUserUsername('');
+      setCreateUserPassword('');
+      setCreateUserRole('KASIR');
+      await loadData();
+    } else {
+      toast({ variant: 'destructive', title: 'Gagal', description: result.message });
+    }
+  };
+
+  const handleDeleteUser = async (id: number) => {
+    if (!confirm('Yakin ingin menghapus user ini?')) return;
+    const result = await deleteUser({ id });
+    if (result.success) {
+      toast({ variant: 'success', title: 'Berhasil', description: result.message });
+      await loadData();
+    } else {
+      toast({ variant: 'destructive', title: 'Gagal', description: result.message });
+    }
+  };
+
+  const handleChangeUserRole = async (id: number, newRole: 'ADMIN' | 'KASIR') => {
+    const result = await changeUserRole({ id, role: newRole });
+    if (result.success) {
+      toast({ variant: 'success', title: 'Berhasil', description: result.message });
+      await loadData();
     } else {
       toast({ variant: 'destructive', title: 'Gagal', description: result.message });
     }
@@ -146,9 +274,14 @@ export default function AdminPage() {
         {/* Kategori Management */}
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <Tag className="h-4 w-4 text-muted-foreground" />
-              <CardTitle>Manajemen Kategori Ayam</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                <CardTitle>Manajemen Kategori Ayam</CardTitle>
+              </div>
+              <Button size="sm" className="gap-1.5" onClick={() => setOpenCreateKategori(true)}>
+                <Plus className="h-4 w-4" /> Tambah Kategori
+              </Button>
             </div>
             <CardDescription>Update harga jual dan stok harian</CardDescription>
           </CardHeader>
@@ -157,7 +290,10 @@ export default function AdminPage() {
               {kategori_list.map((k) => (
                 <div key={k.id} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
-                    <p className="font-semibold tracking-tight">{k.nama_kategori}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold tracking-tight">{k.nama_kategori}</p>
+                      {!k.aktif && <Badge variant="secondary">Nonaktif</Badge>}
+                    </div>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       <Badge variant="muted" className="tabular-nums">
                         <Tag className="h-3 w-3" /> {formatRupiah(k.harga_hari_ini)}
@@ -170,7 +306,7 @@ export default function AdminPage() {
                       </Badge>
                     </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
+                  <div className="flex gap-2 shrink-0 flex-wrap">
                     <Button
                       size="sm"
                       variant="outline"
@@ -187,10 +323,140 @@ export default function AdminPage() {
                     >
                       <Boxes className="h-3.5 w-3.5" /> Stok
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5"
+                      onClick={() => handleToggleKategoriAyam(k.id, k.aktif)}
+                    >
+                      {k.aktif ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                      {k.aktif ? 'Nonaktif' : 'Aktif'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="gap-1.5"
+                      onClick={() => handleDeleteKategoriAyam(k.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Hapus
+                    </Button>
                   </div>
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Kategori Pengeluaran Management */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                <CardTitle>Kategori Pengeluaran</CardTitle>
+              </div>
+              <Button size="sm" className="gap-1.5" onClick={() => setOpenCreateKategoriPengeluaran(true)}>
+                <Plus className="h-4 w-4" /> Tambah Kategori
+              </Button>
+            </div>
+            <CardDescription>Kelola kategori pengeluaran kas</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {kategori_pengeluaran.map((k) => (
+                <div key={k.id} className="flex items-center justify-between rounded-lg border border-border bg-card p-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-2 w-2 rounded-full ${k.aktif ? 'bg-emerald-500' : 'bg-muted-foreground'}`} />
+                    <span className="font-medium">{k.nama}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0"
+                      onClick={() => handleToggleKategoriPengeluaran(k.id, k.aktif)}
+                    >
+                      {k.aktif ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                      onClick={() => handleDeleteKategoriPengeluaran(k.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* User Management */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <CardTitle>Manajemen User</CardTitle>
+              </div>
+              <Button size="sm" className="gap-1.5" onClick={() => setOpenCreateUser(true)}>
+                <Plus className="h-4 w-4" /> Tambah User
+              </Button>
+            </div>
+            <CardDescription>Kelola user dan role</CardDescription>
+          </CardHeader>
+          <CardContent className="px-0 sm:px-6">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nama</TableHead>
+                  <TableHead>Username</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4}>
+                      <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
+                          <Inbox className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <p className="text-sm text-muted-foreground">Belum ada user</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : users.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium">{u.nama}</TableCell>
+                    <TableCell className="text-muted-foreground">{u.username}</TableCell>
+                    <TableCell>
+                      <select
+                        value={u.role}
+                        onChange={(e) => handleChangeUserRole(u.id, e.target.value as 'ADMIN' | 'KASIR')}
+                        className="rounded border border-border bg-background px-2 py-1 text-sm"
+                      >
+                        <option value="KASIR">KASIR</option>
+                        <option value="ADMIN">ADMIN</option>
+                      </select>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="gap-1.5"
+                        onClick={() => handleDeleteUser(u.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Hapus
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
 
@@ -298,6 +564,104 @@ export default function AdminPage() {
             <Button onClick={handleSaveStok} disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Kategori Dialog */}
+      <Dialog open={openCreateKategori} onOpenChange={setOpenCreateKategori}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-muted-foreground" /> Tambah Kategori Ayam
+            </DialogTitle>
+            <DialogDescription>Buat kategori ayam baru dengan harga awal</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Nama Kategori</Label>
+              <Input placeholder="Contoh: Ayam Jumbo" value={create_nama} onChange={(e) => setCreateNama(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Harga Awal (Rp)</Label>
+              <Input className="tabular-nums" type="number" min="1" placeholder="0" value={create_harga} onChange={(e) => setCreateHarga(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenCreateKategori(false)} disabled={isSubmitting}>Batal</Button>
+            <Button onClick={handleCreateKategori} disabled={isSubmitting || !create_nama || !create_harga}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? 'Membuat...' : 'Buat Kategori'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Kategori Pengeluaran Dialog */}
+      <Dialog open={openCreateKategoriPengeluaran} onOpenChange={setOpenCreateKategoriPengeluaran}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-muted-foreground" /> Tambah Kategori Pengeluaran
+            </DialogTitle>
+            <DialogDescription>Buat kategori pengeluaran kas baru</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Nama Kategori</Label>
+              <Input placeholder="Contoh: Pakan, Sopir, Listrik" value={create_nama_pengeluaran} onChange={(e) => setCreateNamaPengeluaran(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenCreateKategoriPengeluaran(false)} disabled={isSubmitting}>Batal</Button>
+            <Button onClick={handleCreateKategoriPengeluaran} disabled={isSubmitting || !create_nama_pengeluaran}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? 'Membuat...' : 'Buat Kategori'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create User Dialog */}
+      <Dialog open={openCreateUser} onOpenChange={setOpenCreateUser}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-muted-foreground" /> Tambah User
+            </DialogTitle>
+            <DialogDescription>Buat user baru dengan role</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Nama</Label>
+              <Input placeholder="Nama lengkap" value={create_user_nama} onChange={(e) => setCreateUserNama(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Username</Label>
+              <Input placeholder="Username untuk login" value={create_user_username} onChange={(e) => setCreateUserUsername(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
+              <Input type="password" placeholder="Password minimal 6 karakter" value={create_user_password} onChange={(e) => setCreateUserPassword(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Role</Label>
+              <select
+                value={create_user_role}
+                onChange={(e) => setCreateUserRole(e.target.value as 'ADMIN' | 'KASIR')}
+                className="w-full rounded border border-border bg-background px-3 py-2"
+              >
+                <option value="KASIR">KASIR</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenCreateUser(false)} disabled={isSubmitting}>Batal</Button>
+            <Button onClick={handleCreateUser} disabled={isSubmitting || !create_user_nama || !create_user_username || !create_user_password}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? 'Membuat...' : 'Buat User'}
             </Button>
           </DialogFooter>
         </DialogContent>

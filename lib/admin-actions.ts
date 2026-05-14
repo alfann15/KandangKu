@@ -254,6 +254,819 @@ export async function updateStokKategori(
 }
 
 /**
+ * Create kategori ayam baru
+ */
+const CreateKategoriSchema = z.object({
+  nama_kategori: z.string().min(1, 'Nama kategori harus diisi').max(100),
+  harga_hari_ini: z.number().int().positive('Harga harus lebih dari 0'),
+});
+
+type CreateKategoriInput = z.infer<typeof CreateKategoriSchema>;
+
+export async function createKategori(
+  input: CreateKategoriInput
+): Promise<ActionResponse> {
+  try {
+    const validated = CreateKategoriSchema.parse(input);
+
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'UNAUTHORIZED',
+      };
+    }
+
+    // Check if user is ADMIN
+    if (session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa membuat kategori',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    // Check if kategori already exists
+    const existing = await prisma.kategoriAyam.findFirst({
+      where: {
+        nama_kategori: {
+          equals: validated.nama_kategori,
+          mode: 'insensitive',
+        },
+      },
+    });
+
+    if (existing) {
+      return {
+        success: false,
+        message: 'Kategori dengan nama ini sudah ada',
+        error: 'DUPLICATE',
+      };
+    }
+
+    // Create kategori
+    const kategori = await prisma.kategoriAyam.create({
+      data: {
+        nama_kategori: validated.nama_kategori,
+        harga_hari_ini: validated.harga_hari_ini,
+        stok_bebas: 0,
+        stok_booking: 0,
+      },
+    });
+
+    return {
+      success: true,
+      message: `Kategori ${kategori.nama_kategori} berhasil dibuat`,
+      data: kategori,
+    };
+  } catch (error) {
+    console.error('Error creating kategori:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: 'Data tidak valid: ' + error.errors[0].message,
+        error: 'VALIDATION_ERROR',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Gagal membuat kategori',
+      error: 'CREATE_ERROR',
+    };
+  }
+}
+
+/**
+ * Toggle aktif/nonaktif kategori ayam
+ */
+const ToggleKategoriAyamSchema = z.object({
+  id: z.number().int().positive(),
+  aktif: z.boolean(),
+});
+
+type ToggleKategoriAyamInput = z.infer<typeof ToggleKategoriAyamSchema>;
+
+export async function toggleKategoriAyam(
+  input: ToggleKategoriAyamInput
+): Promise<ActionResponse> {
+  try {
+    const validated = ToggleKategoriAyamSchema.parse(input);
+
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'UNAUTHORIZED',
+      };
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa mengubah status',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    const kategori = await prisma.kategoriAyam.findUnique({
+      where: { id: validated.id },
+    });
+
+    if (!kategori) {
+      return {
+        success: false,
+        message: 'Kategori ayam tidak ditemukan',
+        error: 'NOT_FOUND',
+      };
+    }
+
+    await prisma.kategoriAyam.update({
+      where: { id: validated.id },
+      data: { aktif: validated.aktif },
+    });
+
+    return {
+      success: true,
+      message: `Kategori ${kategori.nama_kategori} ${validated.aktif ? 'diaktifkan' : 'dinonaktifkan'}`,
+    };
+  } catch (error) {
+    console.error('Error toggling kategori ayam:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: 'Data tidak valid: ' + error.errors[0].message,
+        error: 'VALIDATION_ERROR',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Gagal mengubah status kategori',
+      error: 'UPDATE_ERROR',
+    };
+  }
+}
+
+/**
+ * Delete kategori ayam
+ */
+const DeleteKategoriAyamSchema = z.object({
+  id: z.number().int().positive(),
+});
+
+type DeleteKategoriAyamInput = z.infer<typeof DeleteKategoriAyamSchema>;
+
+export async function deleteKategoriAyam(
+  input: DeleteKategoriAyamInput
+): Promise<ActionResponse> {
+  try {
+    const validated = DeleteKategoriAyamSchema.parse(input);
+
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'UNAUTHORIZED',
+      };
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa menghapus kategori',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    const kategori = await prisma.kategoriAyam.findUnique({
+      where: { id: validated.id },
+    });
+
+    if (!kategori) {
+      return {
+        success: false,
+        message: 'Kategori ayam tidak ditemukan',
+        error: 'NOT_FOUND',
+      };
+    }
+
+    // Check if kategori has transactions
+    const hasTransactions = await prisma.detailTransaksi.findFirst({
+      where: { id_kategori: validated.id },
+    });
+
+    if (hasTransactions) {
+      return {
+        success: false,
+        message: 'Tidak bisa menghapus kategori yang sudah memiliki transaksi',
+        error: 'HAS_TRANSACTIONS',
+      };
+    }
+
+    await prisma.kategoriAyam.delete({
+      where: { id: validated.id },
+    });
+
+    return {
+      success: true,
+      message: `Kategori ${kategori.nama_kategori} berhasil dihapus`,
+    };
+  } catch (error) {
+    console.error('Error deleting kategori ayam:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: 'Data tidak valid: ' + error.errors[0].message,
+        error: 'VALIDATION_ERROR',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Gagal menghapus kategori',
+      error: 'DELETE_ERROR',
+    };
+  }
+}
+
+/**
+ * Delete kategori pengeluaran
+ */
+const DeleteKategoriPengeluaranSchema = z.object({
+  id: z.number().int().positive(),
+});
+
+type DeleteKategoriPengeluaranInput = z.infer<typeof DeleteKategoriPengeluaranSchema>;
+
+export async function deleteKategoriPengeluaran(
+  input: DeleteKategoriPengeluaranInput
+): Promise<ActionResponse> {
+  try {
+    const validated = DeleteKategoriPengeluaranSchema.parse(input);
+
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'UNAUTHORIZED',
+      };
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa menghapus kategori',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    const kategori = await prisma.kategoriPengeluaran.findUnique({
+      where: { id: validated.id },
+    });
+
+    if (!kategori) {
+      return {
+        success: false,
+        message: 'Kategori pengeluaran tidak ditemukan',
+        error: 'NOT_FOUND',
+      };
+    }
+
+    // Check if kategori has pengeluaran
+    const hasPengeluaran = await prisma.pengeluaran.findFirst({
+      where: { id_kategori: validated.id },
+    });
+
+    if (hasPengeluaran) {
+      return {
+        success: false,
+        message: 'Tidak bisa menghapus kategori yang sudah memiliki pengeluaran',
+        error: 'HAS_PENGELUARAN',
+      };
+    }
+
+    await prisma.kategoriPengeluaran.delete({
+      where: { id: validated.id },
+    });
+
+    return {
+      success: true,
+      message: `Kategori ${kategori.nama} berhasil dihapus`,
+    };
+  } catch (error) {
+    console.error('Error deleting kategori pengeluaran:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: 'Data tidak valid: ' + error.errors[0].message,
+        error: 'VALIDATION_ERROR',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Gagal menghapus kategori',
+      error: 'DELETE_ERROR',
+    };
+  }
+}
+
+/**
+ * Get all users
+ */
+export async function getAllUsers(): Promise<
+  ActionResponse<
+    Array<{
+      id: number;
+      nama: string;
+      username: string;
+      role: string;
+    }>
+  >
+> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'UNAUTHORIZED',
+      };
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa mengakses',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    const users = await prisma.user.findMany({
+      select: { id: true, nama: true, username: true, role: true },
+      orderBy: { nama: 'asc' },
+    });
+
+    return {
+      success: true,
+      message: 'Users berhasil diambil',
+      data: users,
+    };
+  } catch (error) {
+    console.error('Error getting users:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil data users',
+      error: 'FETCH_ERROR',
+    };
+  }
+}
+
+/**
+ * Create user baru
+ */
+const CreateUserSchema = z.object({
+  nama: z.string().min(1, 'Nama harus diisi').max(100),
+  username: z.string().min(3, 'Username minimal 3 karakter').max(50),
+  password: z.string().min(6, 'Password minimal 6 karakter'),
+  role: z.enum(['ADMIN', 'KASIR']),
+});
+
+type CreateUserInput = z.infer<typeof CreateUserSchema>;
+
+export async function createUser(
+  input: CreateUserInput
+): Promise<ActionResponse> {
+  try {
+    const validated = CreateUserSchema.parse(input);
+
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'UNAUTHORIZED',
+      };
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa membuat user',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    // Check if username exists
+    const existing = await prisma.user.findUnique({
+      where: { username: validated.username },
+    });
+
+    if (existing) {
+      return {
+        success: false,
+        message: 'Username sudah digunakan',
+        error: 'DUPLICATE',
+      };
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(validated.password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        nama: validated.nama,
+        username: validated.username,
+        password: hashedPassword,
+        role: validated.role,
+      },
+    });
+
+    return {
+      success: true,
+      message: `User ${user.nama} berhasil dibuat`,
+    };
+  } catch (error) {
+    console.error('Error creating user:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: 'Data tidak valid: ' + error.errors[0].message,
+        error: 'VALIDATION_ERROR',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Gagal membuat user',
+      error: 'CREATE_ERROR',
+    };
+  }
+}
+
+/**
+ * Delete user
+ */
+const DeleteUserSchema = z.object({
+  id: z.number().int().positive(),
+});
+
+type DeleteUserInput = z.infer<typeof DeleteUserSchema>;
+
+export async function deleteUser(
+  input: DeleteUserInput
+): Promise<ActionResponse> {
+  try {
+    const validated = DeleteUserSchema.parse(input);
+
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'UNAUTHORIZED',
+      };
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa menghapus user',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    // Prevent deleting self
+    if (validated.id === session.user.id) {
+      return {
+        success: false,
+        message: 'Tidak bisa menghapus user sendiri',
+        error: 'CANNOT_DELETE_SELF',
+      };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: validated.id },
+    });
+
+    if (!user) {
+      return {
+        success: false,
+        message: 'User tidak ditemukan',
+        error: 'NOT_FOUND',
+      };
+    }
+
+    await prisma.user.delete({
+      where: { id: validated.id },
+    });
+
+    return {
+      success: true,
+      message: `User ${user.nama} berhasil dihapus`,
+    };
+  } catch (error) {
+    console.error('Error deleting user:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: 'Data tidak valid: ' + error.errors[0].message,
+        error: 'VALIDATION_ERROR',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Gagal menghapus user',
+      error: 'DELETE_ERROR',
+    };
+  }
+}
+
+/**
+ * Change user role
+ */
+const ChangeUserRoleSchema = z.object({
+  id: z.number().int().positive(),
+  role: z.enum(['ADMIN', 'KASIR']),
+});
+
+type ChangeUserRoleInput = z.infer<typeof ChangeUserRoleSchema>;
+
+export async function changeUserRole(
+  input: ChangeUserRoleInput
+): Promise<ActionResponse> {
+  try {
+    const validated = ChangeUserRoleSchema.parse(input);
+
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'UNAUTHORIZED',
+      };
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa mengubah role',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: validated.id },
+    });
+
+    if (!user) {
+      return {
+        success: false,
+        message: 'User tidak ditemukan',
+        error: 'NOT_FOUND',
+      };
+    }
+
+    await prisma.user.update({
+      where: { id: validated.id },
+      data: { role: validated.role },
+    });
+
+    return {
+      success: true,
+      message: `Role ${user.nama} diubah menjadi ${validated.role}`,
+    };
+  } catch (error) {
+    console.error('Error changing user role:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: 'Data tidak valid: ' + error.errors[0].message,
+        error: 'VALIDATION_ERROR',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Gagal mengubah role',
+      error: 'UPDATE_ERROR',
+    };
+  }
+}
+
+/**
+ * Get all kategori pengeluaran
+ */
+export async function getKategoriPengeluaranForAdmin(): Promise<
+  ActionResponse<
+    Array<{
+      id: number;
+      nama: string;
+      aktif: boolean;
+    }>
+  >
+> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'UNAUTHORIZED',
+      };
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa mengakses',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    const kategori = await prisma.kategoriPengeluaran.findMany({
+      orderBy: { nama: 'asc' },
+    });
+
+    return {
+      success: true,
+      message: 'Kategori pengeluaran berhasil diambil',
+      data: kategori,
+    };
+  } catch (error) {
+    console.error('Error getting kategori pengeluaran:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil data kategori pengeluaran',
+      error: 'FETCH_ERROR',
+    };
+  }
+}
+
+/**
+ * Create kategori pengeluaran baru
+ */
+const CreateKategoriPengeluaranSchema = z.object({
+  nama: z.string().min(1, 'Nama kategori harus diisi').max(100),
+});
+
+type CreateKategoriPengeluaranInput = z.infer<typeof CreateKategoriPengeluaranSchema>;
+
+export async function createKategoriPengeluaran(
+  input: CreateKategoriPengeluaranInput
+): Promise<ActionResponse> {
+  try {
+    const validated = CreateKategoriPengeluaranSchema.parse(input);
+
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'UNAUTHORIZED',
+      };
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa membuat kategori',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    // Check if kategori already exists
+    const existing = await prisma.kategoriPengeluaran.findUnique({
+      where: { nama: validated.nama },
+    });
+
+    if (existing) {
+      return {
+        success: false,
+        message: 'Kategori dengan nama ini sudah ada',
+        error: 'DUPLICATE',
+      };
+    }
+
+    // Create kategori
+    const kategori = await prisma.kategoriPengeluaran.create({
+      data: {
+        nama: validated.nama,
+        aktif: true,
+      },
+    });
+
+    return {
+      success: true,
+      message: `Kategori pengeluaran ${kategori.nama} berhasil dibuat`,
+      data: kategori,
+    };
+  } catch (error) {
+    console.error('Error creating kategori pengeluaran:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: 'Data tidak valid: ' + error.errors[0].message,
+        error: 'VALIDATION_ERROR',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Gagal membuat kategori pengeluaran',
+      error: 'CREATE_ERROR',
+    };
+  }
+}
+
+/**
+ * Toggle aktif/nonaktif kategori pengeluaran
+ */
+const ToggleKategoriPengeluaranSchema = z.object({
+  id: z.number().int().positive(),
+  aktif: z.boolean(),
+});
+
+type ToggleKategoriPengeluaranInput = z.infer<typeof ToggleKategoriPengeluaranSchema>;
+
+export async function toggleKategoriPengeluaran(
+  input: ToggleKategoriPengeluaranInput
+): Promise<ActionResponse> {
+  try {
+    const validated = ToggleKategoriPengeluaranSchema.parse(input);
+
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: 'Unauthorized',
+        error: 'UNAUTHORIZED',
+      };
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa mengubah status',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    const kategori = await prisma.kategoriPengeluaran.findUnique({
+      where: { id: validated.id },
+    });
+
+    if (!kategori) {
+      return {
+        success: false,
+        message: 'Kategori pengeluaran tidak ditemukan',
+        error: 'NOT_FOUND',
+      };
+    }
+
+    await prisma.kategoriPengeluaran.update({
+      where: { id: validated.id },
+      data: { aktif: validated.aktif },
+    });
+
+    return {
+      success: true,
+      message: `Kategori ${kategori.nama} ${validated.aktif ? 'diaktifkan' : 'dinonaktifkan'}`,
+    };
+  } catch (error) {
+    console.error('Error toggling kategori pengeluaran:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: 'Data tidak valid: ' + error.errors[0].message,
+        error: 'VALIDATION_ERROR',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Gagal mengubah status kategori',
+      error: 'UPDATE_ERROR',
+    };
+  }
+}
+
+/**
  * Get history mutasi stok untuk audit
  */
 export async function getMutasiStokHistory(limit: number = 50): Promise<

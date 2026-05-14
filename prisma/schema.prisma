@@ -27,6 +27,7 @@ model KategoriAyam {
   harga_hari_ini Int
   stok_bebas     Int               @default(0)
   stok_booking   Int               @default(0)
+  aktif          Boolean           @default(true)
   detail_pesanan DetailTransaksi[]
   mutasi_stok    MutasiStok[]
   createdAt      DateTime          @default(now())
