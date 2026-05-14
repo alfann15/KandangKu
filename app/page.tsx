@@ -328,7 +328,7 @@ export default async function Home() {
         {/* Footer */}
         <footer className="mx-auto mt-auto w-full max-w-5xl pt-16 text-center">
           <p className="text-xs text-muted-foreground">
-            KandangKu v1.0.0 · Built with Next.js, Prisma &amp; TypeScript
+            KandangKu v1.1.0 · Built with Next.js, Prisma &amp; TypeScript
           </p>
         </footer>
       </div>
