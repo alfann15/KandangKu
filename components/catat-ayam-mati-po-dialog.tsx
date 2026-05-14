@@ -75,13 +75,11 @@ export function CatatAyamMatiPODialog({ open, onOpenChange, kategoriList, onSucc
               className="w-full rounded border border-border bg-background px-3 py-2"
             >
               <option value="">Pilih kategori...</option>
-              {kategoriList
-                .filter((k) => k.stok_booking > 0)
-                .map((k) => (
-                  <option key={k.id} value={k.id}>
-                    {k.nama_kategori} (Booking: {k.stok_booking} ekor)
-                  </option>
-                ))}
+              {kategoriList.map((k) => (
+                <option key={k.id} value={k.id}>
+                  {k.nama_kategori} (Booking: {k.stok_booking} ekor)
+                </option>
+              ))}
             </select>
           </div>
 
