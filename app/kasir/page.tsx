@@ -237,7 +237,7 @@ export default function KasirPage() {
           status_bayar,
           total_bayar,
           tanggal_jatuh_tempo: status_bayar !== 'LUNAS' ? (tanggal_jatuh_tempo || undefined) : undefined,
-          tipe: 'LANGSUNG',
+          tipe_transaksi: 'LANGSUNG',
         });
         setIsSubmitting(false);
         toast({
@@ -299,7 +299,7 @@ export default function KasirPage() {
           dp: parseInt(dp_po) || 0,
           diskon: diskon_nilai,
           tanggal_jatuh_tempo: tanggal_jatuh_tempo || undefined,
-          tipe: 'PRE_ORDER',
+          tipe_transaksi: 'PRE_ORDER',
         });
         setIsSubmitting(false);
         toast({
