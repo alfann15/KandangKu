@@ -130,7 +130,6 @@ export default function KasirPage() {
 
   // Pengeluaran kas
   const [openPengeluaran, setOpenPengeluaran] = useState(false);
-  const [openCatatAyamMatiPO, setOpenCatatAyamMatiPO] = useState(false);
   const [openKurangiEkorPo, setOpenKurangiEkorPo] = useState(false);
   const [kategoriPengeluaran, setKategoriPengeluaran] = useState<Array<{ id: number; nama: string }>>([]);
   const [pengeluaran_jumlah, setPengeluaranJumlah] = useState('');

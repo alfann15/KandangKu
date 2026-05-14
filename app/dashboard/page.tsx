@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
@@ -401,7 +402,7 @@ function formatRupiahShort(value: number): string {
   return String(value);
 }
 
-function Omzet7HariChart({ data }: { data: Array<{ tanggal: string; label: string; omzet: number; jumlah_transaksi: number; is_today: boolean }> }) {
+const Omzet7HariChart = React.memo(function Omzet7HariChart({ data }: { data: Array<{ tanggal: string; label: string; omzet: number; jumlah_transaksi: number; is_today: boolean }> }) {
   if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -465,7 +466,7 @@ function Omzet7HariChart({ data }: { data: Array<{ tanggal: string; label: strin
       </div>
     </div>
   );
-}
+});
 
 
 

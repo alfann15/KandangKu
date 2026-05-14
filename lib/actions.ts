@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { z } from 'zod';
+import { formatRupiah } from '@/lib/utils';
 
 // ============================================
 // SHARED TYPES & VALIDATION HELPERS
@@ -1198,15 +1199,6 @@ export async function substituteKategoriPO(
   }
 }
 
-function formatRupiah(value: number): string {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(value);
-}
-
-
 /**
  * Catat ayam mati dari PO (stok booking berkurang)
  * - Kurangi stok_booking kategori
@@ -1254,23 +1246,26 @@ export async function catatAyamMatiPO(
     }
 
     // Update stok booking dan log mutasi
-    await prisma.$transaction(async (tx) => {
-      await tx.kategoriAyam.update({
-        where: { id: validated.id_kategori },
-        data: {
-          stok_booking: kategori.stok_booking - validated.jumlah_ekor,
-        },
-      });
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.kategoriAyam.update({
+          where: { id: validated.id_kategori },
+          data: {
+            stok_booking: kategori.stok_booking - validated.jumlah_ekor,
+          },
+        });
 
-      await tx.mutasiStok.create({
-        data: {
-          id_kategori: validated.id_kategori,
-          jumlah_ekor: validated.jumlah_ekor,
-          tipe_mutasi: 'AYAM_MATI_PO',
-          id_kasir,
-        },
-      });
-    });
+        await tx.mutasiStok.create({
+          data: {
+            id_kategori: validated.id_kategori,
+            jumlah_ekor: validated.jumlah_ekor,
+            tipe_mutasi: 'AYAM_MATI_PO',
+            id_kasir,
+          },
+        });
+      },
+      { isolationLevel: 'Serializable' }
+    );
 
     return {
       success: true,
