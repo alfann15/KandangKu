@@ -410,7 +410,7 @@ export async function exportRekapToExcel(
   rekapData: RekapData
 ): Promise<ActionResponse> {
   try {
-    const { default: XLSX } = await import('xlsx');
+    const XLSX = require('xlsx');
 
     // Create workbook
     const wb = XLSX.utils.book_new();
