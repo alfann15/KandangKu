@@ -130,6 +130,11 @@ export default function DashboardPage() {
                 <BarChart3 className="h-4 w-4" /> Rekap
               </Button>
             </Link>
+            <Link href="/dashboard/analytics" className="hidden md:block">
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <TrendingUp className="h-4 w-4" /> Analytics
+              </Button>
+            </Link>
             <Link href="/rekap" className="sm:hidden">
               <Button variant="outline" size="sm" className="h-9 w-9 p-0" aria-label="Rekap">
                 <BarChart3 className="h-4 w-4" />

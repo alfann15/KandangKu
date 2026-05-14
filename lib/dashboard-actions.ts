@@ -340,3 +340,156 @@ export async function getOmzet7Hari(): Promise<
     return { success: false, message: 'Gagal mengambil data omzet', error: 'FETCH_ERROR' };
   }
 }
+
+/**
+ * Get analytics dashboard: margin, top kasir, top kategori
+ */
+export async function getDashboardAnalytics(): Promise<
+  ActionResponse<{
+    margin_analysis: {
+      total_omzet: number;
+      total_kas_masuk: number;
+      total_diskon: number;
+      margin_persen: number;
+    };
+    top_kasir: Array<{
+      kasir_id: number;
+      kasir_nama: string;
+      jumlah_transaksi: number;
+      total_omzet: number;
+      total_kas: number;
+      margin_persen: number;
+    }>;
+    top_kategori: Array<{
+      kategori_id: number;
+      nama_kategori: string;
+      total_ekor: number;
+      total_omzet: number;
+      harga_rata_rata: number;
+    }>;
+  }>
+> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, message: 'Unauthorized', error: 'UNAUTHORIZED' };
+    }
+
+    const now = new Date();
+    const today_start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const today_end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+
+    // Get all transactions today
+    const transactions = await prisma.transaksi.findMany({
+      where: {
+        waktu_transaksi: { gte: today_start, lt: today_end },
+        dibatalkan_pada: null,
+      },
+      include: {
+        kasir: { select: { id: true, nama: true } },
+        detail_pesanan: {
+          include: {
+            kategori: { select: { nama_kategori: true } },
+          },
+        },
+      },
+    });
+
+    // Margin analysis
+    let total_omzet = 0;
+    let total_kas_masuk = 0;
+    let total_diskon = 0;
+
+    transactions.forEach((t) => {
+      const omzet = t.detail_pesanan.reduce((s, d) => s + d.jumlah_ekor * d.harga_satuan, 0);
+      total_omzet += omzet;
+      total_kas_masuk += t.total_bayar;
+      total_diskon += t.diskon;
+    });
+
+    const margin_persen = total_omzet > 0 ? Math.round((total_kas_masuk / total_omzet) * 1000) / 10 : 0;
+
+    // Top kasir
+    const kasirMap = new Map<
+      number,
+      { kasir_id: number; kasir_nama: string; jumlah_transaksi: number; total_omzet: number; total_kas: number }
+    >();
+
+    transactions.forEach((t) => {
+      if (!kasirMap.has(t.id_kasir)) {
+        kasirMap.set(t.id_kasir, {
+          kasir_id: t.id_kasir,
+          kasir_nama: t.kasir.nama,
+          jumlah_transaksi: 0,
+          total_omzet: 0,
+          total_kas: 0,
+        });
+      }
+      const entry = kasirMap.get(t.id_kasir)!;
+      entry.jumlah_transaksi += 1;
+      entry.total_kas += t.total_bayar;
+      const omzet = t.detail_pesanan.reduce((s, d) => s + d.jumlah_ekor * d.harga_satuan, 0);
+      entry.total_omzet += omzet;
+    });
+
+    const top_kasir = Array.from(kasirMap.values())
+      .map((k) => ({
+        ...k,
+        margin_persen: k.total_omzet > 0 ? Math.round((k.total_kas / k.total_omzet) * 1000) / 10 : 0,
+      }))
+      .sort((a, b) => b.total_kas - a.total_kas)
+      .slice(0, 5);
+
+    // Top kategori
+    const kategoriMap = new Map<
+      number,
+      { kategori_id: number; nama_kategori: string; total_ekor: number; total_omzet: number }
+    >();
+
+    transactions.forEach((t) => {
+      t.detail_pesanan.forEach((d) => {
+        if (!kategoriMap.has(d.id_kategori)) {
+          kategoriMap.set(d.id_kategori, {
+            kategori_id: d.id_kategori,
+            nama_kategori: d.kategori.nama_kategori,
+            total_ekor: 0,
+            total_omzet: 0,
+          });
+        }
+        const entry = kategoriMap.get(d.id_kategori)!;
+        entry.total_ekor += d.jumlah_ekor;
+        entry.total_omzet += d.jumlah_ekor * d.harga_satuan;
+      });
+    });
+
+    const top_kategori = Array.from(kategoriMap.values())
+      .map((k) => ({
+        ...k,
+        harga_rata_rata: k.total_ekor > 0 ? Math.round(k.total_omzet / k.total_ekor) : 0,
+      }))
+      .sort((a, b) => b.total_ekor - a.total_ekor)
+      .slice(0, 5);
+
+    return {
+      success: true,
+      message: 'Analytics berhasil diambil',
+      data: {
+        margin_analysis: {
+          total_omzet,
+          total_kas_masuk,
+          total_diskon,
+          margin_persen,
+        },
+        top_kasir,
+        top_kategori,
+      },
+    };
+  } catch (error) {
+    console.error('Error getDashboardAnalytics:', error);
+    return {
+      success: false,
+      message: 'Gagal mengambil analytics',
+      error: 'FETCH_ERROR',
+    };
+  }
+}
