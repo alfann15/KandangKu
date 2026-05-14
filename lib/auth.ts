@@ -16,6 +16,7 @@ declare module "next-auth" {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
+  trustHost: true, // Untuk bypass cek host saat development dengan domain custom
   providers: [
     Credentials({
       credentials: {
