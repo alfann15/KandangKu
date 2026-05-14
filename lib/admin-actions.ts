@@ -210,8 +210,8 @@ export async function updateStokKategori(
         await tx.mutasiStok.create({
           data: {
             id_kategori: validated.id_kategori,
-            jumlah_ekor: perubahan_bebas,
-            tipe_mutasi: 'TAMBAH_STOK',
+            jumlah_ekor: Math.abs(perubahan_bebas),
+            tipe_mutasi: perubahan_bebas > 0 ? 'TAMBAH_STOK' : 'AYAM_MATI',
             id_kasir: session.user.id,
           },
         });
@@ -222,8 +222,8 @@ export async function updateStokKategori(
         await tx.mutasiStok.create({
           data: {
             id_kategori: validated.id_kategori,
-            jumlah_ekor: perubahan_booking,
-            tipe_mutasi: 'TAMBAH_STOK',
+            jumlah_ekor: Math.abs(perubahan_booking),
+            tipe_mutasi: perubahan_booking > 0 ? 'TAMBAH_STOK' : 'AYAM_MATI',
             id_kasir: session.user.id,
           },
         });
