@@ -1,9 +1,13 @@
-const CACHE_NAME = 'kandangku-v1';
+const CACHE_NAME = 'kandangku-v2';
 const OFFLINE_URL = '/offline';
 
 const STATIC_ASSETS = [
   '/',
   '/offline',
+  '/kasir',
+  '/dashboard',
+  '/admin',
+  '/rekap',
   '/_next/static/chunks/main.js',
   '/_next/static/chunks/webpack.js',
 ];
@@ -36,7 +40,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - network first, fallback to cache
+// Fetch event - network first for HTML, cache first for assets
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -51,7 +55,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network first strategy for HTML
+  // Network first strategy for HTML pages
   if (request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
       fetch(request)
@@ -71,10 +75,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache first for static assets
+  // Cache first for static assets (JS, CSS, images)
   event.respondWith(
     caches.match(request).then((response) => {
-      return response || fetch(request);
+      if (response) return response;
+      return fetch(request).then((response) => {
+        if (response.ok && (request.url.includes('_next') || request.url.includes('.js') || request.url.includes('.css'))) {
+          const cache = caches.open(CACHE_NAME);
+          cache.then((c) => c.put(request, response.clone()));
+        }
+        return response;
+      }).catch(() => {
+        return caches.match(OFFLINE_URL);
+      });
     })
   );
 });
