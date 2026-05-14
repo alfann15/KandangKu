@@ -1035,3 +1035,172 @@ export async function batalkanTransaksi(
     return { success: false, message: 'Gagal membatalkan transaksi', error: error instanceof Error ? error.message : 'UNKNOWN' };
   }
 }
+
+
+/**
+ * Substitusi kategori untuk PO yang ayamnya mati
+ * - Ubah kategori di detail transaksi
+ * - Update stok booking (kurang dari kategori lama, tambah ke kategori baru)
+ * - Recalculate total_bayar berdasarkan harga kategori baru
+ */
+const SubstituteKategoriSchema = z.object({
+  id_detail: z.number().int().positive(),
+  id_kategori_baru: z.number().int().positive(),
+  alasan: z.string().min(1, 'Alasan harus diisi').max(200),
+});
+
+type SubstituteKategoriInput = z.infer<typeof SubstituteKategoriSchema>;
+
+export async function substituteKategoriPO(
+  input: SubstituteKategoriInput
+): Promise<ActionResponse> {
+  try {
+    const validated = SubstituteKategoriSchema.parse(input);
+
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, message: 'Unauthorized', error: 'UNAUTHORIZED' };
+    }
+
+    const role = (session.user as any).role as string;
+    if (role !== 'ADMIN') {
+      return {
+        success: false,
+        message: 'Hanya admin yang bisa substitusi kategori',
+        error: 'FORBIDDEN',
+      };
+    }
+
+    const detail = await prisma.detailTransaksi.findUnique({
+      where: { id: validated.id_detail },
+      include: {
+        transaksi: true,
+        kategori: true,
+      },
+    });
+
+    if (!detail) {
+      return {
+        success: false,
+        message: 'Detail transaksi tidak ditemukan',
+        error: 'NOT_FOUND',
+      };
+    }
+
+    // Hanya untuk PRE_ORDER
+    if (detail.transaksi.tipe_transaksi !== 'PRE_ORDER') {
+      return {
+        success: false,
+        message: 'Substitusi hanya bisa untuk Pre-Order',
+        error: 'INVALID_TYPE',
+      };
+    }
+
+    const kategori_baru = await prisma.kategoriAyam.findUnique({
+      where: { id: validated.id_kategori_baru },
+    });
+
+    if (!kategori_baru) {
+      return {
+        success: false,
+        message: 'Kategori baru tidak ditemukan',
+        error: 'NOT_FOUND',
+      };
+    }
+
+    if (kategori_baru.stok_booking < detail.jumlah_ekor) {
+      return {
+        success: false,
+        message: `Stok booking kategori ${kategori_baru.nama_kategori} tidak cukup (tersedia: ${kategori_baru.stok_booking}, butuh: ${detail.jumlah_ekor})`,
+        error: 'INSUFFICIENT_STOCK',
+      };
+    }
+
+    const id_kasir = parseInt(session.user.id as string, 10);
+    const harga_lama = detail.harga_satuan;
+    const harga_baru = kategori_baru.harga_hari_ini;
+    const selisih_harga = (harga_baru - harga_lama) * detail.jumlah_ekor;
+
+    // Atomic update
+    await prisma.$transaction(
+      async (tx) => {
+        // Update detail transaksi
+        await tx.detailTransaksi.update({
+          where: { id: validated.id_detail },
+          data: {
+            id_kategori: validated.id_kategori_baru,
+            harga_satuan: harga_baru,
+          },
+        });
+
+        // Update stok booking
+        await tx.kategoriAyam.update({
+          where: { id: detail.id_kategori },
+          data: { stok_booking: detail.kategori.stok_booking - detail.jumlah_ekor },
+        });
+
+        await tx.kategoriAyam.update({
+          where: { id: validated.id_kategori_baru },
+          data: { stok_booking: kategori_baru.stok_booking - detail.jumlah_ekor },
+        });
+
+        // Update total_bayar transaksi
+        await tx.transaksi.update({
+          where: { id: detail.transaksi.id },
+          data: {
+            total_bayar: detail.transaksi.total_bayar + selisih_harga,
+          },
+        });
+
+        // Log mutasi stok
+        await tx.mutasiStok.create({
+          data: {
+            id_kategori: detail.id_kategori,
+            jumlah_ekor: detail.jumlah_ekor,
+            tipe_mutasi: 'SUBSTITUSI_KATEGORI_KELUAR',
+            id_kasir,
+          },
+        });
+
+        await tx.mutasiStok.create({
+          data: {
+            id_kategori: validated.id_kategori_baru,
+            jumlah_ekor: detail.jumlah_ekor,
+            tipe_mutasi: 'SUBSTITUSI_KATEGORI_MASUK',
+            id_kasir,
+          },
+        });
+      },
+      { isolationLevel: 'Serializable' }
+    );
+
+    return {
+      success: true,
+      message: `Kategori berhasil disubstitusi dari ${detail.kategori.nama_kategori} ke ${kategori_baru.nama_kategori}. Selisih harga: ${selisih_harga > 0 ? '+' : ''}${formatRupiah(selisih_harga)}`,
+    };
+  } catch (error) {
+    console.error('Error substituteKategoriPO:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: 'Data tidak valid: ' + error.errors[0].message,
+        error: 'VALIDATION_ERROR',
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Gagal substitusi kategori',
+      error: 'UPDATE_ERROR',
+    };
+  }
+}
+
+function formatRupiah(value: number): string {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+  }).format(value);
+}
