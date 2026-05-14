@@ -24,6 +24,7 @@ import {
 import {
   createPengeluaran, getKategoriPengeluaran,
 } from '@/lib/pengeluaran-actions';
+import { CatatAyamMatiPODialog } from '@/components/catat-ayam-mati-po-dialog';
 import {
   LogOut, Plus, Trash2, AlertTriangle, Package,
   Bird, ShoppingCart, Clock, Receipt, Loader2,
@@ -127,6 +128,7 @@ export default function KasirPage() {
 
   // Pengeluaran kas
   const [openPengeluaran, setOpenPengeluaran] = useState(false);
+  const [openCatatAyamMatiPO, setOpenCatatAyamMatiPO] = useState(false);
   const [kategoriPengeluaran, setKategoriPengeluaran] = useState<Array<{ id: number; nama: string }>>([]);
   const [pengeluaran_jumlah, setPengeluaranJumlah] = useState('');
   const [pengeluaran_kategori_id, setPengeluaranKategoriId] = useState('');
@@ -606,6 +608,9 @@ export default function KasirPage() {
             <Button variant="outline" size="sm" className="gap-1.5 hidden sm:inline-flex" onClick={() => setOpenPengeluaran(true)}>
               <Wallet className="h-4 w-4" /> Pengeluaran
             </Button>
+            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:inline-flex" onClick={() => setOpenCatatAyamMatiPO(true)}>
+              <AlertTriangle className="h-4 w-4" /> Mati PO
+            </Button>
             <Button variant="outline" size="sm" className="sm:hidden h-9 w-9 p-0" onClick={() => setOpenCatatMati(true)} aria-label="Catat mati">
               <AlertTriangle className="h-4 w-4" />
             </Button>
@@ -614,6 +619,9 @@ export default function KasirPage() {
             </Button>
             <Button variant="outline" size="sm" className="sm:hidden h-9 w-9 p-0" onClick={() => setOpenPengeluaran(true)} aria-label="Pengeluaran">
               <Wallet className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" className="sm:hidden h-9 w-9 p-0" onClick={() => setOpenCatatAyamMatiPO(true)} aria-label="Catat ayam mati PO">
+              <AlertTriangle className="h-4 w-4" />
             </Button>
             {role === 'ADMIN' && (
               <>
@@ -1188,6 +1196,17 @@ export default function KasirPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Catat Ayam Mati PO Dialog */}
+      <CatatAyamMatiPODialog
+        open={openCatatAyamMatiPO}
+        onOpenChange={setOpenCatatAyamMatiPO}
+        kategoriList={kategori}
+        onSuccess={() => {
+          loadKategori();
+          toast({ variant: 'success', title: 'Berhasil', description: 'Ayam mati PO berhasil dicatat' });
+        }}
+      />
     </div>
   );
 }
