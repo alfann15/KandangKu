@@ -120,7 +120,7 @@ const PRESETS: Preset[] = [
   },
 ];
 
-type Tab = 'HARIAN' | 'KASIR' | 'KATEGORI' | 'MUTASI';
+type Tab = 'HARIAN' | 'KASIR' | 'KATEGORI' | 'PENGELUARAN' | 'MUTASI';
 
 // ============================================
 // COMPONENT
@@ -214,6 +214,7 @@ export default function RekapPage() {
     { k: 'HARIAN', l: 'Per Hari', icon: TrendingUp },
     { k: 'KASIR', l: 'Per Kasir', icon: Users },
     { k: 'KATEGORI', l: 'Per Kategori', icon: Package },
+    { k: 'PENGELUARAN', l: 'Pengeluaran', icon: Wallet },
     { k: 'MUTASI', l: 'Mutasi Stok', icon: ArrowUpDown },
   ];
 
@@ -331,7 +332,7 @@ export default function RekapPage() {
         {data && (
           <>
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 lg:gap-4">
               <Card>
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between">
@@ -366,6 +367,17 @@ export default function RekapPage() {
                   </div>
                   <p className="mt-2 text-xl font-semibold tracking-tight tabular-nums text-amber-600 lg:text-2xl">
                     {formatRupiah(data.summary.total_diskon)}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between">
+                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Pengeluaran</p>
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <p className="mt-2 text-xl font-semibold tracking-tight tabular-nums text-rose-600 lg:text-2xl">
+                    {formatRupiah(data.summary.total_pengeluaran)}
                   </p>
                 </CardContent>
               </Card>
@@ -555,6 +567,46 @@ export default function RekapPage() {
                   <p className="mt-4 px-4 text-xs italic text-muted-foreground sm:px-0">
                     * Pendapatan adalah estimasi karena harga per kategori tidak disimpan di tiap transaksi (pakai harga_hari_ini saat ini). Kas masuk aktual lihat tab "Per Hari" / "Per Kasir".
                   </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {tab === 'PENGELUARAN' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Pengeluaran Kas</CardTitle>
+                  <CardDescription>
+                    Breakdown pengeluaran per kategori
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-0 sm:px-6">
+                  {data.pengeluaran_breakdown.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
+                        <Inbox className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Tidak ada pengeluaran pada periode ini</p>
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Kategori</TableHead>
+                          <TableHead className="text-right">Total Pengeluaran</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {data.pengeluaran_breakdown.map((p) => (
+                          <TableRow key={p.kategori_nama}>
+                            <TableCell className="font-medium">{p.kategori_nama}</TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {formatRupiah(p.total_pengeluaran)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
                 </CardContent>
               </Card>
             )}

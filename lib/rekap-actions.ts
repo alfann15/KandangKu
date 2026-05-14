@@ -31,6 +31,7 @@ export type RekapData = {
     total_penjualan: number;        // sebelum diskon (omzet kotor)
     total_kas_masuk: number;        // setelah diskon (uang yang benar-benar masuk)
     total_diskon: number;
+    total_pengeluaran: number;      // kas keluar
     jumlah_transaksi: number;
     rata_rata_kas_per_hari: number;
   };
@@ -53,6 +54,10 @@ export type RekapData = {
     nama_kategori: string;
     total_ekor: number;
     estimasi_pendapatan: number;    // estimasi pakai harga_hari_ini saat ini
+  }>;
+  pengeluaran_breakdown: Array<{
+    kategori_nama: string;
+    total_pengeluaran: number;
   }>;
   mutasi_summary: {
     total_tambah_stok: number;
@@ -137,7 +142,7 @@ export async function getRekapPeriode(
     }
 
     // ===== FETCH DATA =====
-    const [transactions, mutasi] = await Promise.all([
+    const [transactions, mutasi, pengeluaran] = await Promise.all([
       prisma.transaksi.findMany({
         where: {
           waktu_transaksi: { gte: startDate, lt: endDateExclusive },
@@ -161,6 +166,12 @@ export async function getRekapPeriode(
           kategori: { select: { id: true, nama_kategori: true } },
         },
       }),
+      prisma.pengeluaran.findMany({
+        where: { waktu: { gte: startDate, lt: endDateExclusive } },
+        include: {
+          kategori: { select: { nama: true } },
+        },
+      }),
     ]);
 
     // Helper: omzet sebuah transaksi dari snapshot harga_satuan.
@@ -178,6 +189,7 @@ export async function getRekapPeriode(
     const total_kas_masuk = transactions.reduce((s, t) => s + t.total_bayar, 0);
     const total_diskon = transactions.reduce((s, t) => s + t.diskon, 0);
     const total_penjualan = transactions.reduce((s, t) => s + omzetTransaksi(t), 0);
+    const total_pengeluaran = pengeluaran.reduce((s, p) => s + p.jumlah, 0);
     const jumlah_transaksi = transactions.length;
     const rata_rata_kas_per_hari =
       jumlah_hari > 0 ? Math.round(total_kas_masuk / jumlah_hari) : 0;
@@ -314,6 +326,28 @@ export async function getRekapPeriode(
       a.nama_kategori.localeCompare(b.nama_kategori)
     );
 
+    // ===== PENGELUARAN BREAKDOWN =====
+    const pengeluaranMap = new Map<
+      string,
+      { kategori_nama: string; total_pengeluaran: number }
+    >();
+
+    pengeluaran.forEach((p) => {
+      const kategoriNama = p.kategori?.nama || 'Lain-lain';
+      if (!pengeluaranMap.has(kategoriNama)) {
+        pengeluaranMap.set(kategoriNama, {
+          kategori_nama: kategoriNama,
+          total_pengeluaran: 0,
+        });
+      }
+      const e = pengeluaranMap.get(kategoriNama)!;
+      e.total_pengeluaran += p.jumlah;
+    });
+
+    const pengeluaran_breakdown = Array.from(pengeluaranMap.values()).sort((a, b) =>
+      b.total_pengeluaran - a.total_pengeluaran
+    );
+
     // ===== PERIODE LABEL =====
     const lastDay = new Date(endDateExclusive);
     lastDay.setDate(lastDay.getDate() - 1);
@@ -334,12 +368,14 @@ export async function getRekapPeriode(
           total_penjualan,
           total_kas_masuk,
           total_diskon,
+          total_pengeluaran,
           jumlah_transaksi,
           rata_rata_kas_per_hari,
         },
         daily_breakdown,
         kasir_breakdown,
         kategori_breakdown,
+        pengeluaran_breakdown,
         mutasi_summary: {
           total_tambah_stok,
           total_ayam_mati,
