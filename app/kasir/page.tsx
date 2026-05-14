@@ -224,6 +224,36 @@ export default function KasirPage() {
       status_bayar === 'BELUM_BAYAR' ? 0
       : status_bayar === 'LUNAS' ? total_setelah_diskon
       : dpVal;
+    
+    // Check if online
+    if (!navigator.onLine) {
+      try {
+        const { savePendingTransaksi } = await import('@/lib/offline-sync');
+        await savePendingTransaksi({
+          nama_pelanggan,
+          nomor_wa: nomor_wa.trim() || undefined,
+          items: cart.map((i) => ({ id_kategori: i.kategori_id, jumlah_ekor: i.jumlah_ekor })),
+          diskon: diskon_nilai,
+          status_bayar,
+          total_bayar,
+          tanggal_jatuh_tempo: status_bayar !== 'LUNAS' ? (tanggal_jatuh_tempo || undefined) : undefined,
+          tipe: 'LANGSUNG',
+        });
+        setIsSubmitting(false);
+        toast({
+          variant: 'success',
+          title: 'Transaksi disimpan offline',
+          description: 'Data akan disinkronkan saat online',
+        });
+        resetForm();
+        return;
+      } catch (error) {
+        setIsSubmitting(false);
+        toast({ variant: 'destructive', title: 'Gagal', description: 'Gagal menyimpan offline' });
+        return;
+      }
+    }
+    
     const result = await createTransaksiLangsung({
       nama_pelanggan,
       nomor_wa: nomor_wa.trim() || undefined,
@@ -257,6 +287,35 @@ export default function KasirPage() {
       toast({ variant: 'destructive', title: 'Error', description: 'Nama pelanggan & keranjang wajib diisi' }); return;
     }
     setIsSubmitting(true);
+    
+    // Check if online
+    if (!navigator.onLine) {
+      try {
+        const { savePendingTransaksi } = await import('@/lib/offline-sync');
+        await savePendingTransaksi({
+          nama_pelanggan,
+          nomor_wa: nomor_wa.trim() || undefined,
+          items: cart.map((i) => ({ id_kategori: i.kategori_id, jumlah_ekor: i.jumlah_ekor })),
+          dp: parseInt(dp_po) || 0,
+          diskon: diskon_nilai,
+          tanggal_jatuh_tempo: tanggal_jatuh_tempo || undefined,
+          tipe: 'PRE_ORDER',
+        });
+        setIsSubmitting(false);
+        toast({
+          variant: 'success',
+          title: 'Pre-Order disimpan offline',
+          description: 'Data akan disinkronkan saat online',
+        });
+        resetForm();
+        return;
+      } catch (error) {
+        setIsSubmitting(false);
+        toast({ variant: 'destructive', title: 'Gagal', description: 'Gagal menyimpan offline' });
+        return;
+      }
+    }
+    
     const result = await createPreOrder({
       nama_pelanggan,
       nomor_wa: nomor_wa.trim() || undefined,
