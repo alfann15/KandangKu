@@ -515,32 +515,36 @@ Pengeluaran
 
 ## Roadmap
 
-Selesai (sudah ada di aplikasi):
+**v1.2.0 - Production Release (Selesai):**
+- [x] Edit transaksi (admin only)
+- [x] Substitusi kategori untuk PO yang ayamnya mati
+- [x] Kurangi ayam dari PO spesifik
+- [x] Dashboard analytics (margin, top kasir, top kategori)
+- [x] Mobile navbar optimization
+- [x] Code optimization (remove unused imports, React.memo, extract types)
+- [x] Production deployment ke Vercel
 
-- [x] Pencatatan pengeluaran kas (kas keluar untuk operasional)
-- [x] Customer registry + autocomplete nama &amp; nomor WA
-- [x] Riwayat pembayaran cicilan (audit trail per pembayaran)
-- [x] Cetak struk via HTML print (thermal-friendly 80mm)
+**Fitur Selesai (v1.0 - v1.2):**
+- [x] Pencatatan pengeluaran kas
+- [x] Customer registry + autocomplete
+- [x] Riwayat pembayaran cicilan
+- [x] Cetak struk thermal-friendly
 - [x] Tanggal jatuh tempo + highlight piutang lewat tempo
 - [x] Search/filter di tab Piutang
-- [x] Pembatalan transaksi (refund / tanpa refund + role-based time window)
+- [x] Pembatalan transaksi (refund / tanpa refund)
 - [x] Dashboard chart tren omzet 7 hari
-- [x] Breakdown pengeluaran di rekap periode
-- [x] Manajemen kategori ayam (create, disable, delete)
-- [x] Manajemen kategori pengeluaran (create, disable, delete)
-- [x] Manajemen user (create, delete, change role)
+- [x] Breakdown pengeluaran di rekap
+- [x] Manajemen kategori ayam
+- [x] Manajemen kategori pengeluaran
+- [x] Manajemen user
+- [x] Export rekap ke Excel
 
-Masih dalam pertimbangan:
-
-- [ ] Edit transaksi (admin only) — kalau kasir salah input jumlah/kategori
-- [ ] Substitusi kategori untuk PO yang ayamnya mati
+**Masih dalam Pertimbangan (Future):**
 - [ ] Auto-reminder piutang via WhatsApp Business API
-- [ ] Export rekap ke Excel / PDF
-- [ ] Dashboard analytics lebih dalam (margin, top kasir, top kategori)
 - [ ] Multi-cabang (per outlet)
-- [ ] Mode offline (PWA + IndexedDB sync)
-- [ ] Reset password by admin
-- [ ] Cetak struk via thermal printer Bluetooth (saat ini pakai print browser)
+- [ ] Reset password by email
+- [ ] Thermal printer Bluetooth integration
+- [ ] Mobile app native (React Native)
 
 ---
 
