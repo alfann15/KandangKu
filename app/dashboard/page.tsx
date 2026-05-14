@@ -15,7 +15,7 @@ import {
   LogOut, RotateCw, Pause, Play, BarChart3, Bird,
   LayoutDashboard, Users, Package, TrendingUp, Wallet,
   Receipt, ShieldCheck, Loader2, Inbox, AlertCircle,
-  PiggyBank,
+  PiggyBank, WalletCards,
 } from 'lucide-react';
 
 type KasirBreakdown = { kasir_id: number; kasir_nama: string; jumlah_transaksi: number; total_kas: number };
@@ -98,8 +98,8 @@ export default function DashboardPage() {
 
   const stats = [
     { label: 'Omzet Hari Ini', value: formatRupiah(total_penjualan), icon: TrendingUp, accent: 'text-foreground', hint: 'Nilai semua barang yang keluar' },
-    { label: 'Kas Masuk', value: formatRupiah(total_kas_masuk), icon: Wallet, accent: 'text-emerald-600', hint: 'Uang dari penjualan' },
-    { label: 'Pengeluaran', value: formatRupiah(total_pengeluaran), icon: WalletMinimal, accent: total_pengeluaran > 0 ? 'text-amber-600' : 'text-foreground', hint: 'Kas yang dikeluarkan hari ini' },
+    { label: 'Kas Masuk', value: formatRupiah(total_kas_masuk), icon: WalletCards, accent: 'text-emerald-600', hint: 'Uang dari penjualan' },
+    { label: 'Pengeluaran', value: formatRupiah(total_pengeluaran), icon: Wallet, accent: total_pengeluaran > 0 ? 'text-amber-600' : 'text-foreground', hint: 'Kas yang dikeluarkan hari ini' },
     { label: 'Kas Bersih', value: formatRupiah(kas_bersih), icon: PiggyBank, accent: kas_bersih < 0 ? 'text-rose-600' : 'text-emerald-600', hint: 'Kas Masuk − Pengeluaran' },
     { label: 'Total Piutang', value: formatRupiah(total_piutang), icon: AlertCircle, accent: total_piutang > 0 ? 'text-rose-600' : 'text-foreground', hint: 'Tagihan terbuka (lintas hari)' },
     { label: 'Transaksi', value: String(total_transaksi), icon: Receipt, accent: 'text-foreground', hint: 'Jumlah transaksi hari ini' },

@@ -4,7 +4,7 @@
 
 **Sistem Point of Sale &amp; Manajemen Inventaris untuk Penjualan Ayam Hidup**
 
-Aplikasi web modern yang dirancang khusus untuk usaha penjualan ayam skala keluarga — sederhana, andal, dan aman digunakan oleh banyak kasir secara bersamaan.
+Aplikasi web modern yang dirancang khusus untuk usaha penjualan ayam skala micro — sederhana, andal, dan aman digunakan oleh banyak kasir secara bersamaan.
 
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -41,9 +41,9 @@ Aplikasi web modern yang dirancang khusus untuk usaha penjualan ayam skala kelua
 
 ## Tentang
 
-**KandangKu** adalah aplikasi POS (Point of Sale) dan manajemen inventaris yang dibuat khusus untuk penjualan ayam hidup per kategori berat. Aplikasi ini menyelesaikan masalah-masalah umum yang dihadapi penjual ayam skala keluarga:
+**KandangKu** adalah aplikasi POS (Point of Sale) dan manajemen inventaris yang dibuat khusus untuk penjualan ayam hidup per kategori berat. Aplikasi ini menyelesaikan masalah-masalah umum yang dihadapi penjual ayam skala micro:
 
-- **Banyak orang input transaksi bersamaan** — empat anggota keluarga bisa jadi kasir tanpa bentrok stok.
+- **Banyak orang input transaksi bersamaan** — beberapa user bisa jadi kasir tanpa bentrok stok.
 - **Stok sering double-sold** — sistem mengunci stok di level database (atomic transaction) agar tidak pernah terjual lebih dari yang ada.
 - **Harga harian berubah-ubah** — admin bisa update harga setiap pagi, transaksi langsung pakai harga saat ini, dan harga di-snapshot agar omzet tetap akurat.
 - **Pre-Order &amp; DP rumit dihitung manual** — sistem otomatis menghitung sisa bayar berdasarkan harga terkini saat pelunasan.
@@ -294,7 +294,7 @@ Setelah `npm run db:seed`:
 | `testadmin` | `testadmin` | ADMIN |
 | `testkasir` | `testkasir` | KASIR |
 
-> **Penting:** Ganti password default sebelum deploy ke production. Untuk usaha keluarga dengan banyak kasir, edit `prisma/seed.ts` untuk menambahkan user lain (mis. `ayah`, `ibu`, `kakak`, `adik`) sebelum seed.
+> **Penting:** Ganti password default sebelum deploy ke production. Untuk usaha micro dengan banyak kasir, edit `prisma/seed.ts` untuk menambahkan user lain (mis. `ayah`, `ibu`, `kakak`, `adik`) sebelum seed.
 
 ---
 

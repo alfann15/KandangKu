@@ -191,13 +191,43 @@ export async function updateStokKategori(
       };
     }
 
-    // Update stok
-    await prisma.kategoriAyam.update({
-      where: { id: validated.id_kategori },
-      data: {
-        stok_bebas: validated.stok_bebas,
-        stok_booking: validated.stok_booking,
-      },
+    // Calculate changes
+    const perubahan_bebas = validated.stok_bebas - kategori.stok_bebas;
+    const perubahan_booking = validated.stok_booking - kategori.stok_booking;
+
+    // Update stok dan catat mutasi dalam transaction
+    await prisma.$transaction(async (tx) => {
+      await tx.kategoriAyam.update({
+        where: { id: validated.id_kategori },
+        data: {
+          stok_bebas: validated.stok_bebas,
+          stok_booking: validated.stok_booking,
+        },
+      });
+
+      // Catat mutasi stok bebas jika ada perubahan
+      if (perubahan_bebas !== 0) {
+        await tx.mutasiStok.create({
+          data: {
+            id_kategori: validated.id_kategori,
+            jumlah_ekor: perubahan_bebas,
+            tipe_mutasi: 'TAMBAH_STOK',
+            id_kasir: session.user.id,
+          },
+        });
+      }
+
+      // Catat mutasi stok booking jika ada perubahan
+      if (perubahan_booking !== 0) {
+        await tx.mutasiStok.create({
+          data: {
+            id_kategori: validated.id_kategori,
+            jumlah_ekor: perubahan_booking,
+            tipe_mutasi: 'TAMBAH_STOK',
+            id_kasir: session.user.id,
+          },
+        });
+      }
     });
 
     return {

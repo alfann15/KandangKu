@@ -17,6 +17,7 @@ import { getKategoriForAdmin, updateHargaKategori, updateStokKategori, getMutasi
 import {
   LogOut, Pencil, ShieldCheck, Tag, Boxes, History,
   LayoutDashboard, Bird, BarChart3, Loader2, Inbox,
+  RotateCw, Pause, Play,
 } from 'lucide-react';
 
 type Kategori = { id: number; nama_kategori: string; harga_hari_ini: number; stok_bebas: number; stok_booking: number };
@@ -30,6 +31,8 @@ export default function AdminPage() {
   const [kategori_list, setKategoriList] = useState<Kategori[]>([]);
   const [mutasi_history, setMutasiHistory] = useState<MutasiHistory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [auto_refresh, setAutoRefresh] = useState(true);
   const [openEditHarga, setOpenEditHarga] = useState(false);
   const [openEditStok, setOpenEditStok] = useState(false);
   const [selectedKategori, setSelectedKategori] = useState<Kategori | null>(null);
@@ -38,20 +41,28 @@ export default function AdminPage() {
   const [edit_stok_booking, setEditStokBooking] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loadData = async () => {
-    const [kategoriRes, mutasiRes] = await Promise.all([getKategoriForAdmin(), getMutasiStokHistory(30)]);
-    if (kategoriRes.error === 'FORBIDDEN') { router.push('/kasir'); return; }
-    if (kategoriRes.success && kategoriRes.data) setKategoriList(kategoriRes.data);
-    if (mutasiRes.success && mutasiRes.data) setMutasiHistory(mutasiRes.data);
-    setLoading(false);
+  const loadData = async (silent = false) => {
+    if (!silent) setRefreshing(true);
+    try {
+      const [kategoriRes, mutasiRes] = await Promise.all([getKategoriForAdmin(), getMutasiStokHistory(30)]);
+      if (kategoriRes.error === 'FORBIDDEN') { router.push('/kasir'); return; }
+      if (kategoriRes.success && kategoriRes.data) setKategoriList(kategoriRes.data);
+      if (mutasiRes.success && mutasiRes.data) setMutasiHistory(mutasiRes.data);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
   useEffect(() => {
     if (status === 'unauthenticated') { router.push('/auth/signin'); return; }
     if (status === 'authenticated' && (session?.user as any)?.role !== 'ADMIN') { router.push('/kasir'); return; }
+    if (status !== 'authenticated') return;
     loadData();
+    const interval = auto_refresh ? setInterval(() => loadData(true), 10000) : null;
+    return () => { if (interval) clearInterval(interval); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status]);
+  }, [status, auto_refresh]);
 
   const handleSaveHarga = async () => {
     if (!selectedKategori || !edit_harga) return;
@@ -117,6 +128,13 @@ export default function AdminPage() {
                 <BarChart3 className="h-4 w-4" /> Rekap
               </Button>
             </Link>
+            <Button variant="outline" size="sm" className="h-9 w-9 p-0" onClick={() => loadData()} disabled={refreshing} aria-label="Refresh">
+              <RotateCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button variant="outline" size="sm" className="h-9 gap-1.5 px-2.5" onClick={() => setAutoRefresh(!auto_refresh)} aria-label={auto_refresh ? 'Pause auto-refresh' : 'Resume auto-refresh'}>
+              {auto_refresh ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              <span className="hidden sm:inline">{auto_refresh ? 'Pause' : 'Auto'}</span>
+            </Button>
             <Button variant="outline" size="sm" className="h-9 w-9 p-0" onClick={() => signOut({ callbackUrl: '/auth/signin' })} aria-label="Keluar">
               <LogOut className="h-4 w-4" />
             </Button>
@@ -183,7 +201,7 @@ export default function AdminPage() {
               <History className="h-4 w-4 text-muted-foreground" />
               <CardTitle>History Mutasi Stok</CardTitle>
             </div>
-            <CardDescription>30 perubahan stok terakhir</CardDescription>
+            <CardDescription>30 perubahan stok terakhir · auto-refresh tiap 10 detik</CardDescription>
           </CardHeader>
           <CardContent className="px-0 sm:px-6">
             <Table>
