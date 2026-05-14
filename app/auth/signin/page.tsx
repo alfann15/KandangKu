@@ -143,7 +143,7 @@ export default function SignInPage() {
           </form>
 
           {/* Demo credentials */}
-          <div className="mt-8 rounded-xl border border-border bg-muted/40 p-4">
+          {/* <div className="mt-8 rounded-xl border border-border bg-muted/40 p-4">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
               Demo Credentials
             </p>
@@ -153,7 +153,7 @@ export default function SignInPage() {
               <p className="text-foreground">testkasir</p>
               <p className="text-muted-foreground">testkasir</p>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </main>
