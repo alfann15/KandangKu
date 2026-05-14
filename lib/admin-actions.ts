@@ -22,6 +22,7 @@ export async function getKategoriForAdmin(): Promise<
       harga_hari_ini: number;
       stok_bebas: number;
       stok_booking: number;
+      aktif: boolean;
     }>
   >
 > {
