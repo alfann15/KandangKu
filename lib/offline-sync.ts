@@ -59,7 +59,13 @@ export async function initDB(): Promise<IDBDatabase> {
   });
 }
 
-export async function savePendingTransaksi(transaksi: PendingTransaksi): Promise<void> {
+export async function savePendingTransaksi(data: Omit<PendingTransaksi, 'uuid' | 'created_at' | 'synced'>): Promise<void> {
+  const transaksi: PendingTransaksi = {
+    ...data,
+    uuid: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    created_at: Date.now(),
+    synced: false,
+  };
   const database = db || (await initDB());
   return new Promise((resolve, reject) => {
     const tx = database.transaction([STORE_TRANSAKSI], 'readwrite');
