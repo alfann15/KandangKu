@@ -264,6 +264,11 @@ export default function AdminPage() {
                 <Bird className="h-4 w-4" /> Kasir
               </Button>
             </Link>
+            <Link href="/admin/edit-transaksi">
+              <Button variant="outline" size="sm" className="gap-1.5 hidden sm:inline-flex">
+                <Pencil className="h-4 w-4" /> Edit Transaksi
+              </Button>
+            </Link>
             <Link href="/dashboard">
               <Button variant="outline" size="sm" className="gap-1.5 hidden sm:inline-flex">
                 <LayoutDashboard className="h-4 w-4" /> Dashboard
