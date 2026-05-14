@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kandangku-v2';
+const CACHE_NAME = 'kandangku-v3';
 const OFFLINE_URL = '/offline';
 
 const STATIC_ASSETS = [
@@ -8,8 +8,6 @@ const STATIC_ASSETS = [
   '/dashboard',
   '/admin',
   '/rekap',
-  '/_next/static/chunks/main.js',
-  '/_next/static/chunks/webpack.js',
 ];
 
 // Install event - cache static assets
@@ -61,14 +59,15 @@ self.addEventListener('fetch', (event) => {
       fetch(request)
         .then((response) => {
           if (response.ok) {
-            const cache = caches.open(CACHE_NAME);
-            cache.then((c) => c.put(request, response.clone()));
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, response.clone());
+            });
           }
           return response;
         })
         .catch(() => {
-          return caches.match(request).then((response) => {
-            return response || caches.match(OFFLINE_URL);
+          return caches.match(request).then((cached) => {
+            return cached || caches.match(OFFLINE_URL);
           });
         })
     );
@@ -77,12 +76,13 @@ self.addEventListener('fetch', (event) => {
 
   // Cache first for static assets (JS, CSS, images)
   event.respondWith(
-    caches.match(request).then((response) => {
-      if (response) return response;
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
       return fetch(request).then((response) => {
         if (response.ok && (request.url.includes('_next') || request.url.includes('.js') || request.url.includes('.css'))) {
-          const cache = caches.open(CACHE_NAME);
-          cache.then((c) => c.put(request, response.clone()));
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, response.clone());
+          });
         }
         return response;
       }).catch(() => {
