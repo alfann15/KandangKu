@@ -1,6 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { Providers } from "@/components/providers";
 import { StructuredData } from "@/components/structured-data";
 
@@ -80,6 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={inter.className}>
+        <GoogleAnalytics gaId="G-QC9NS7DZ69" />
         <StructuredData />
         <Providers>{children}</Providers>
       </body>
