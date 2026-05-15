@@ -1,0 +1,18 @@
+# KandangKu robots.txt
+User-agent: *
+Allow: /
+Disallow: /auth/
+Disallow: /kasir/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /rekap/
+Disallow: /receipt/
+Disallow: /api/
+Disallow: /.next/
+Disallow: /node_modules/
+
+# Crawl delay
+Crawl-delay: 1
+
+# Sitemaps
+Sitemap: https://kandangku.alfan-dev.online/sitemap.xml

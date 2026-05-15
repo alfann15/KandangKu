@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,17 @@ import {
 
 // Selalu ambil data terbaru tiap kunjungan
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'KandangKu - POS & Manajemen Inventaris Ayam Hidup',
+  description: 'Aplikasi Point of Sale dan manajemen inventaris khusus untuk penjualan ayam hidup. Multi-kasir, stok real-time, pre-order, dan analytics lengkap.',
+  openGraph: {
+    title: 'KandangKu - POS & Manajemen Inventaris Ayam Hidup',
+    description: 'Aplikasi Point of Sale dan manajemen inventaris khusus untuk penjualan ayam hidup. Multi-kasir, stok real-time, pre-order, dan analytics lengkap.',
+    url: 'https://kandangku.alfan-dev.online',
+    type: 'website',
+  },
+};
 
 type KategoriPublic = {
   id: number;
@@ -69,7 +81,7 @@ export default async function Home() {
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col px-6 py-10 lg:py-14">
         {/* Brand bar */}
-        <div className="flex items-center justify-between">
+        <header className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <Bird className="h-5 w-5" strokeWidth={2.25} />
@@ -86,7 +98,7 @@ export default async function Home() {
               Masuk <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
-        </div>
+        </header>
 
         {/* Hero */}
         <section className="mx-auto mt-16 w-full max-w-3xl text-center lg:mt-24">
@@ -165,56 +177,58 @@ export default async function Home() {
                 const isHabis = k.stok_bebas === 0;
                 const isMenipis = k.stok_bebas > 0 && k.stok_bebas <= 5;
                 return (
-                  <Card
+                  <article
                     key={k.id}
                     className="group relative overflow-hidden transition-all hover:border-foreground/20 hover:shadow-md"
                   >
-                    {/* Decorative icon background */}
-                    <div className="pointer-events-none absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/[0.03] transition-all group-hover:bg-primary/[0.06]" />
-                    <CardContent className="relative p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                          <Bird className="h-5 w-5" strokeWidth={2.25} />
+                    <Card className="h-full">
+                      {/* Decorative icon background */}
+                      <div className="pointer-events-none absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/[0.03] transition-all group-hover:bg-primary/[0.06]" />
+                      <CardContent className="relative p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                            <Bird className="h-5 w-5" strokeWidth={2.25} />
+                          </div>
+                          {isHabis ? (
+                            <Badge variant="destructive">Habis</Badge>
+                          ) : isMenipis ? (
+                            <Badge variant="warning">
+                              <TrendingDown className="h-3 w-3" /> Menipis
+                            </Badge>
+                          ) : (
+                            <Badge variant="success">Tersedia</Badge>
+                          )}
                         </div>
-                        {isHabis ? (
-                          <Badge variant="destructive">Habis</Badge>
-                        ) : isMenipis ? (
-                          <Badge variant="warning">
-                            <TrendingDown className="h-3 w-3" /> Menipis
-                          </Badge>
-                        ) : (
-                          <Badge variant="success">Tersedia</Badge>
-                        )}
-                      </div>
 
-                      <p className="mt-5 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                        Ayam {k.nama_kategori}
-                      </p>
-
-                      <div className="mt-2 flex items-baseline gap-1.5">
-                        <span className="text-3xl font-semibold tracking-tight tabular-nums">
-                          {k.stok_bebas}
-                        </span>
-                        <span className="text-sm text-muted-foreground">ekor</span>
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Tag className="h-3.5 w-3.5" />
-                          Harga
-                        </div>
-                        <span className="text-sm font-semibold tabular-nums">
-                          {formatRupiah(k.harga_hari_ini)}
-                        </span>
-                      </div>
-
-                      {k.stok_booking > 0 && (
-                        <p className="mt-2 text-[11px] text-muted-foreground">
-                          + {k.stok_booking} ekor sudah dipesan (booking)
+                        <p className="mt-5 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                          Ayam {k.nama_kategori}
                         </p>
-                      )}
-                    </CardContent>
-                  </Card>
+
+                        <div className="mt-2 flex items-baseline gap-1.5">
+                          <span className="text-3xl font-semibold tracking-tight tabular-nums">
+                            {k.stok_bebas}
+                          </span>
+                          <span className="text-sm text-muted-foreground">ekor</span>
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Tag className="h-3.5 w-3.5" />
+                            Harga
+                          </div>
+                          <span className="text-sm font-semibold tabular-nums">
+                            {formatRupiah(k.harga_hari_ini)}
+                          </span>
+                        </div>
+
+                        {k.stok_booking > 0 && (
+                          <p className="mt-2 text-[11px] text-muted-foreground">
+                            + {k.stok_booking} ekor sudah dipesan (booking)
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </article>
                 );
               })}
             </div>
@@ -226,6 +240,7 @@ export default async function Home() {
           id="fitur"
           className="mx-auto mt-20 grid w-full max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2 lg:mt-28 lg:grid-cols-3"
         >
+          <h2 className="sr-only">Fitur Utama KandangKu</h2>
           {[
             {
               icon: CreditCard,
@@ -258,73 +273,23 @@ export default async function Home() {
               desc: 'Installable app, offline-capable, sync otomatis saat online.',
             },
           ].map((f) => (
-            <Card key={f.title} className="group transition-all hover:border-foreground/20 hover:shadow-md">
-              <CardContent className="pt-6">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  <f.icon className="h-5 w-5" />
-                </div>
-                <h3 className="mb-1 text-sm font-semibold tracking-tight text-foreground">
-                  {f.title}
-                </h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {f.desc}
-                </p>
-              </CardContent>
-            </Card>
+            <article key={f.title}>
+              <Card className="group transition-all hover:border-foreground/20 hover:shadow-md h-full">
+                <CardContent className="pt-6">
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                    <f.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="mb-1 text-sm font-semibold tracking-tight text-foreground">
+                    {f.title}
+                  </h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {f.desc}
+                  </p>
+                </CardContent>
+              </Card>
+            </article>
           ))}
         </section>
-
-        {/* Demo credentials card */}
-        {/* <section className="mx-auto mt-16 w-full max-w-2xl lg:mt-24">
-          <Card>
-            <CardContent className="p-6 sm:p-8">
-              <div className="mb-6 flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-foreground">
-                  <ShieldCheck className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold tracking-tight">
-                    Demo Credentials
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Gunakan akun di bawah untuk mencoba aplikasi
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-border bg-muted/40 p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    Admin
-                  </p>
-                  <p className="mt-2 font-mono text-sm font-medium text-foreground">
-                    testadmin
-                  </p>
-                  <p className="font-mono text-xs text-muted-foreground">
-                    testadmin
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border bg-muted/40 p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    Kasir
-                  </p>
-                  <p className="mt-2 font-mono text-sm font-medium text-foreground">
-                    testkasir
-                  </p>
-                  <p className="font-mono text-xs text-muted-foreground">
-                    testkasir
-                  </p>
-                </div>
-              </div>
-
-              <Link href="/auth/signin" className="mt-6 block">
-                <Button className="w-full gap-2" size="lg">
-                  Masuk Sekarang <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </section> */}
 
         {/* Footer */}
         <footer className="mx-auto mt-auto w-full max-w-5xl pt-16 text-center">
