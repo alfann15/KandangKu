@@ -1,7 +1,6 @@
 # KandangKu robots.txt
 User-agent: *
 Allow: /
-Disallow: /auth/
 Disallow: /kasir/
 Disallow: /admin/
 Disallow: /dashboard/

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
@@ -83,9 +84,7 @@ export default async function Home() {
         {/* Brand bar */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Bird className="h-5 w-5" strokeWidth={2.25} />
-            </div>
+            <Image src="/icon-192.png" alt="KandangKu" width={36} height={36} className="rounded-xl" priority />
             <div className="leading-tight">
               <p className="text-sm font-semibold tracking-tight">KandangKu</p>
               <p className="text-[11px] uppercase tracking-widest text-muted-foreground">

@@ -57,6 +57,24 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: '/:file(favicon\\.ico|apple-touch-icon\\.png|icon-:size*\\.png|logo\\.png|og-image\\.png)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/manifest.json',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, s-maxage=86400',
+          },
+        ],
+      },
     ];
   },
   redirects: async () => {

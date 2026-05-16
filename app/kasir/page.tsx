@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { signOut, useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +29,7 @@ import { CatatAyamMatiPODialog } from '@/components/catat-ayam-mati-po-dialog';
 import { KurangiEkorPoDialog } from '@/components/kurangi-ekor-po-dialog';
 import {
   LogOut, Plus, Trash2, AlertTriangle, Package,
-  Bird, ShoppingCart, Clock, Receipt, Loader2,
+  ShoppingCart, Clock, Receipt, Loader2,
   LayoutDashboard, ShieldCheck, MessageCircle, Phone,
   Wallet, Ban, Check, Search, X, Printer, Menu,
 } from 'lucide-react';
@@ -606,9 +607,7 @@ export default function KasirPage() {
       <header className="sticky top-0 z-40 border-b border-border glass">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Bird className="h-5 w-5" strokeWidth={2.25} />
-            </div>
+            <Image src="/icon-192.png" alt="KandangKu" width={36} height={36} className="rounded-xl shrink-0" priority />
             <div className="leading-tight">
               <h1 className="text-sm font-semibold tracking-tight">KandangKu Kasir</h1>
               <p className="text-xs text-muted-foreground">

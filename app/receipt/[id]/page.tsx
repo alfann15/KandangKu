@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { formatRupiah } from '@/lib/utils';
 import { getDetailTransaksi } from '@/lib/actions';
-import { Printer, ArrowLeft, Loader2, Bird } from 'lucide-react';
+import { Printer, ArrowLeft, Loader2 } from 'lucide-react';
 
 type DetailTransaksi = {
   id: string;
@@ -96,8 +97,8 @@ export default function ReceiptPage() {
         <div className="receipt text-foreground">
           {/* Header */}
           <div className="text-center border-b border-dashed border-foreground/30 pb-3 mb-3">
-            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground print:bg-foreground print:text-background">
-              <Bird className="h-5 w-5" strokeWidth={2.25} />
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl print:rounded-none">
+              <Image src="/icon-192.png" alt="KandangKu" width={40} height={40} className="rounded-xl print:rounded-none" />
             </div>
             <h1 className="text-base font-bold tracking-tight">KandangKu</h1>
             <p className="text-[11px] text-muted-foreground">Penjualan Ayam Hidup</p>

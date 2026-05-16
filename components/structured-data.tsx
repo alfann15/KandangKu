@@ -27,11 +27,7 @@ export function StructuredData() {
       price: '0',
       priceCurrency: 'IDR',
     },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      ratingCount: '100',
-    },
+
   };
 
   return (

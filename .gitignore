@@ -53,9 +53,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Dev runtime artifacts (proses dev server)
-dev-out.txt
-dev-err.txt
-dev-log.txt
+dev-*.txt
 dev-pid.txt
 
 # ============================================
@@ -73,6 +71,11 @@ dev-pid.txt
 prisma/dev.db
 prisma/dev.db-journal
 prisma/migrations/dev/
+
+# ============================================
+# Sharp / native binaries
+# ============================================
+node_modules/.cache/
 
 # ============================================
 # Deployment

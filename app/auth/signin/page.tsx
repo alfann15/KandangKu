@@ -4,11 +4,11 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Bird,
   ArrowRight,
   AlertCircle,
   Loader2,
@@ -64,8 +64,8 @@ export default function SignInPage() {
 
           {/* Logo & title */}
           <div className="mb-8">
-            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
-              <Bird className="h-6 w-6" strokeWidth={2.25} />
+            <div className="mb-5">
+              <Image src="/icon-192.png" alt="KandangKu" width={48} height={48} className="rounded-2xl shadow-sm" priority />
             </div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               Masuk ke akun Anda

@@ -5,7 +5,7 @@ export function generatePageMetadata(
   description: string,
   path: string = '/'
 ): Metadata {
-  const url = `https://kandangku.app${path}`;
+  const url = `https://kandangku.alfan-dev.online${path}`;
 
   return {
     title: `${title} | KandangKu`,
@@ -19,7 +19,7 @@ export function generatePageMetadata(
       locale: 'id_ID',
       images: [
         {
-          url: 'https://kandangku.app/og-image.png',
+          url: 'https://kandangku.alfan-dev.online/og-image.png',
           width: 1200,
           height: 630,
           alt: 'KandangKu',
@@ -30,7 +30,7 @@ export function generatePageMetadata(
       card: 'summary_large_image',
       title,
       description,
-      images: ['https://kandangku.app/og-image.png'],
+      images: ['https://kandangku.alfan-dev.online/og-image.png'],
     },
     alternates: {
       canonical: url,
